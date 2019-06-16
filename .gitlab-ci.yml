@@ -2,7 +2,7 @@ stages:
   - build
 
 variables:
-  - GIT_SUBMODULE_STRATEGY
+  GIT_SUBMODULE_STRATEGY: recursive
 
 build ubuntu:
   stage: build
