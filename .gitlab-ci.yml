@@ -10,4 +10,4 @@ build ubuntu:
 
 build web:
   stage: build
-  script: source ~/emsdk/emsdk_env.sh; sh buildweb.sh
+  script: source /var/emsdk/emsdk_env.sh; sh buildweb.sh
