@@ -1,0 +1,13 @@
+stages:
+  - build
+
+variables:
+  GIT_SUBMODULE_STRATEGY
+  
+build ubuntu:
+  stage: build
+  script: sh buildubuntu.sh
+
+build web:
+  stage: build
+  script: sh buildubuntu.sh

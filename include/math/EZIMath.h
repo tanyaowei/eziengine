@@ -1,7 +1,7 @@
 #ifndef _EZI_MATH_H_
 #define _EZI_MATH_H_
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 namespace EZIEngine
 {
