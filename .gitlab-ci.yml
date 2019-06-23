@@ -10,4 +10,4 @@ build ubuntu:
 
 build web:
   stage: build
-  script: sh buildweb.sh
+  script: pwd; sh buildweb.sh
