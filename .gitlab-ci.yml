@@ -10,4 +10,4 @@ build ubuntu:
 
 build web:
   stage: build
-  script: pwd; sh buildweb.sh
+  script: BUILD_DIR='pwd'; cd /var/emsdk/; source emsdk_env.sh; cd $BUILD_DIR; sh buildweb.sh
