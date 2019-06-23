@@ -6,7 +6,7 @@ cd $BASE_PATH
 mkdir -p build
 mkdir -p install
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=/var/emsdk/emscripten/1.38.31/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_INSTALL_PREFIX=$BASE_PATH/install ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=$EMSCRIPTEN_ROOT/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_INSTALL_PREFIX=$BASE_PATH/install ..
 make -j12
 make install
 
