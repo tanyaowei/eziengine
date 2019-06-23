@@ -8,6 +8,9 @@ build ubuntu:
   stage: build
   script: bash buildubuntu.sh
 
+before_script:
+  - apk add emscripten make --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+
 build web:
   stage: build
   script: bash buildweb.sh
