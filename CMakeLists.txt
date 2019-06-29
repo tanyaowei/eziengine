@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.5)
 
 project (eziengine VERSION 1.0.0)
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/dependencies/SDL)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/dependencies/glm)
 
 file(GLOB SOURCES 
@@ -12,7 +11,7 @@ file(GLOB SOURCES
 
 add_library(eziengine STATIC ${SOURCES})
 
-target_link_libraries(eziengine glm_static SDL2-static)
+target_link_libraries(eziengine glm_static)
 
 target_include_directories(eziengine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/dependencies/glm)
 
