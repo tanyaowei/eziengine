@@ -6,8 +6,8 @@ variables:
 
 build ubuntu:
   stage: build
-  script: sh buildubuntu.sh
+  script: bash buildubuntu.sh
 
 build web:
   stage: build
-  script: sh buildweb.sh
+  script: bash buildweb.sh
