@@ -3,7 +3,7 @@ SCRIPT_PATH=`realpath $0`
 BASE_PATH=`dirname $SCRIPT_PATH`
 cd $BASE_PATH
 
-source ~/Documents/emsdk/emsdk_env.sh
+source ~/emsdk/emsdk_env.sh
 mkdir -p build
 mkdir -p install
 cd build
