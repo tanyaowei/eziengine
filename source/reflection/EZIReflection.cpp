@@ -1,4 +1,6 @@
 #include <reflection/EZIReflection.h>
+#include <rttr/registration>
+using namespace rttr;
 
 namespace EZIEngine
 {
