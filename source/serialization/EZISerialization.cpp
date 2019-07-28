@@ -1,3 +1,4 @@
+#if 0
 #include <fstream>
 #include <serialization/EZISerialization.h>
 
@@ -256,3 +257,4 @@ Serializer::~Serializer() {}
     }
   }*/
 } // namespace EZIEngine
+#endif

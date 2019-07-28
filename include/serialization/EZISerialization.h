@@ -1,3 +1,4 @@
+#if 0
 #ifndef _EZI_SERIALIZATION_H_
 #define _EZI_SERIALIZATION_H_
 
@@ -85,4 +86,5 @@ namespace EZIEngine
   };*/
 }
 
+#endif
 #endif

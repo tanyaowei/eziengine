@@ -1,3 +1,4 @@
+#if 0
 #include <serialization/EZIDataStream.h>
 
 namespace EZIEngine
@@ -64,3 +65,4 @@ std::string DataStream::getValue<std::string>() const
 }
 
 } // namespace EZIEngine
+#endif

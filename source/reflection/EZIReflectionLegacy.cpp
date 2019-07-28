@@ -1,6 +1,6 @@
+
+#if 0
 #include <reflection/EZIReflection.h>
-#include <rttr/registration>
-using namespace rttr;
 
 namespace EZIEngine
 {
@@ -37,3 +37,4 @@ MetaData *ReflectionManager::getMetaData(metaid id)
   return it->second;
 }
 } // namespace EZIEngine
+#endif

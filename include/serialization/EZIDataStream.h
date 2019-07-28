@@ -1,3 +1,4 @@
+#if 0
 #ifndef _EZI_DATASTREAM_H_
 #define _EZI_DATASTREAM_H_
 
@@ -72,4 +73,5 @@ namespace EZIEngine
   void printDataStream(const std::string& name, const DataStream& value, std::string prefix = "");
 }
 
+#endif
 #endif
