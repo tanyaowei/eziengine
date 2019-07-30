@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include <serialization/EZIDataStream.h>
 
 namespace EZIEngine
@@ -25,7 +25,7 @@ void printDataStream(const std::string &name, const DataStream &value, std::stri
     }
     std::cout << prefix << "}" << std::endl;
     break;
-  case DataStream::DATATYPE::ARRAY:
+  case DataStream::DATATYPE::LIST:
     std::cout << "[" << std::endl;
     for (size_t i = 0; i < value.mMap.size(); ++i)
     {

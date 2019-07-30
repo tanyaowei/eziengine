@@ -11,11 +11,14 @@ enum Fruits
   GRAPES,
 };
 
-EZIReflectionEnum(Fruits)
+EZIReflectionRegistration
 {
-  EZIAddEnumValue(APPLE);
-  EZIAddEnumValue(ORANGE);
-  EZIAddEnumValue(GRAPES);
+  EZIEngine::Reflection::registration::enumeration<Fruits>("Fruits")
+  (
+    EZIEngine::Reflection::value("APPLE",Fruits::APPLE),
+    EZIEngine::Reflection::value("ORANGE",Fruits::ORANGE),
+    EZIEngine::Reflection::value("GRAPES",Fruits::GRAPES)
+  )
 }
 
 class SubObject
@@ -24,18 +27,20 @@ public:
   SubObject() :s(3.1417), e(47), g(ORANGE){}
   ~SubObject(){}
 
-  EZIReflectionDeclaration(SubObject)
+  EZIReflection()
 
   double s;
   std::vector<Fruits> e;
   Fruits g;
 };
 
-EZIReflectionDefinition(SubObject)
+EZIReflectionRegistration
 {
-  EZIAddVectorMember(e);
-  EZIAddBasicMember(s);
-  EZIAddEnumMember(g);
+   EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
+  .constructor<>()
+  .property("s", &SubObject::s)
+  .property("e", &SubObject::e)
+  .property("g", &SubObject::g);
 }
 
 class SubObject2
@@ -44,14 +49,16 @@ public:
   SubObject2() :f(1.2345){}
   ~SubObject2(){}
 
-  EZIReflectionDeclaration(SubObject2)
+  EZIReflection()
 private:
   double f;
 };
 
-EZIReflectionDefinition(SubObject2)
+EZIReflectionRegistration
 {
-  EZIAddBasicMember(f);
+   EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
+  .constructor<>()
+  .property("f", &SubObject2::f);
 }
 
 class Object :public SubObject2
@@ -60,19 +67,20 @@ public:
   Object() :a(0), b(3.14){}
   ~Object(){}
   
-  EZIReflectionDeclaration(Object)
+  EZIReflection(SubObject2)
 
   int a;
   double b;
   SubObject d;
 };
 
-EZIReflectionDefinition(Object)
+EZIReflectionRegistration
 {
-  EZIAddUserDefineBaseClass(SubObject2);
-  EZIAddBasicMember(a);
-  EZIAddBasicMember(b);
-  EZIAddUserDefineMember(d);
+   EZIEngine::Reflection::registration::class_<Object>("Object")
+  .constructor<>()
+  .property("a", &Object::a)
+  .property("b", &Object::b)
+  .property("d", &Object::d);
 }
 
 #define TYPENAME(TYPE) typeid(TYPE).name()
@@ -80,9 +88,9 @@ EZIReflectionDefinition(Object)
 template<typename T>
 void print(const std::string& name, T& object, std::string prefix = "")
 {
-    EZIEngine::DataStream temp;
+    EZIEngine::DataStream datastream;
 
-    EZIEngine::MetaData* data = EZIEngine::ReflectionManager::getInstance()->getMetaData(typeid(T).hash_code());
+    EZIEngine::Reflection::type datatype = EZIEngine::Reflection::type::get<T>();
 
     data->dataStreamOut(reinterpret_cast<void*>(&object), temp);
 
