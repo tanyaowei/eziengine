@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "EZIDataStream.h"
-#include "EZIReflection.h"
-#include "EZISerialization.h"
+#include "serialization/EZIDataStream.h"
+#include "reflection/EZIReflection.h"
+#include "serialization/EZISerialization.h"
 
 enum Fruits
 {
@@ -10,16 +10,6 @@ enum Fruits
   ORANGE,
   GRAPES,
 };
-
-EZIReflectionRegistration
-{
-  EZIEngine::Reflection::registration::enumeration<Fruits>("Fruits")
-  (
-    EZIEngine::Reflection::value("APPLE",Fruits::APPLE),
-    EZIEngine::Reflection::value("ORANGE",Fruits::ORANGE),
-    EZIEngine::Reflection::value("GRAPES",Fruits::GRAPES)
-  )
-}
 
 class SubObject
 {
@@ -34,32 +24,16 @@ public:
   Fruits g;
 };
 
-EZIReflectionRegistration
-{
-   EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
-  .constructor<>()
-  .property("s", &SubObject::s)
-  .property("e", &SubObject::e)
-  .property("g", &SubObject::g);
-}
-
 class SubObject2
 {
 public:
   SubObject2() :f(1.2345){}
   ~SubObject2(){}
 
-  EZIReflection()
 private:
+  EZIReflection()
   double f;
 };
-
-EZIReflectionRegistration
-{
-   EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
-  .constructor<>()
-  .property("f", &SubObject2::f);
-}
 
 class Object :public SubObject2
 {
@@ -76,6 +50,23 @@ public:
 
 EZIReflectionRegistration
 {
+  EZIEngine::Reflection::registration::enumeration<Fruits>("Fruits")
+  (
+    EZIEngine::Reflection::value("APPLE",Fruits::APPLE),
+    EZIEngine::Reflection::value("ORANGE",Fruits::ORANGE),
+    EZIEngine::Reflection::value("GRAPES",Fruits::GRAPES)
+  );
+
+   EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
+  .constructor<>()
+  .property("s", &SubObject::s)
+  .property("e", &SubObject::e)
+  .property("g", &SubObject::g);
+
+   EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
+  .constructor<>()
+  .property("f", &SubObject2::f);
+
    EZIEngine::Reflection::registration::class_<Object>("Object")
   .constructor<>()
   .property("a", &Object::a)
@@ -86,24 +77,18 @@ EZIReflectionRegistration
 #define TYPENAME(TYPE) typeid(TYPE).name()
 
 template<typename T>
-void print(const std::string& name, T& object, std::string prefix = "")
+void print(T object, std::string prefix = "")
 {
-    EZIEngine::DataStream datastream;
+    EZIEngine::DataStream datastream = EZIEngine::write_variant(EZIEngine::Reflection::variant(object));
 
-    EZIEngine::Reflection::type datatype = EZIEngine::Reflection::type::get<T>();
-
-    data->dataStreamOut(reinterpret_cast<void*>(&object), temp);
-
-    EZIEngine::printDataStream(name, temp, prefix);
+    EZIEngine::printDataStream(datastream, prefix);
 }
 
 int main()
 {
   Object test;
 
-  std::cout << std::is_enum<Fruits>::value << std::endl;
-
-  print("test", test);
+  print(test);
 
   return 0;
 }

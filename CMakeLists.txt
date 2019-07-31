@@ -25,6 +25,14 @@ target_include_directories(eziengine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/dependenc
 
 target_include_directories(eziengine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
+add_executable(ezitest ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp)
+
+target_link_libraries(ezitest eziengine)
+
+install(TARGETS ezitest
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+)
+
 install(TARGETS eziengine
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
