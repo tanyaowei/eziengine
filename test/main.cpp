@@ -14,7 +14,7 @@ enum Fruits
 class SubObject
 {
 public:
-  SubObject() :s(3.1417), e(47), g(ORANGE){}
+  SubObject() :s(3.1417), e(5), g(ORANGE){}
   ~SubObject(){}
 
   EZIReflection()
@@ -24,28 +24,39 @@ public:
   Fruits g;
 };
 
-class SubObject2
+class SubObject2: public SubObject
 {
 public:
   SubObject2() :f(1.2345){}
   ~SubObject2(){}
 
 private:
-  EZIReflection()
+  EZIReflection(SubObject)
   double f;
 };
 
-class Object :public SubObject2
+class SubObject3
+{
+  public:
+  SubObject3() :mPtr(new int(2345)){}
+  ~SubObject3(){}
+
+private:
+  EZIReflection()
+  std::unique_ptr<int> mPtr;
+};
+
+class Object :public SubObject2, public SubObject3
 {
 public:
-  Object() :a(0), b(3.14){}
-  ~Object(){}
+  Object() :a(0), b{1,2,3}, d(new SubObject()){}
+  ~Object(){ delete d; }
   
-  EZIReflection(SubObject2)
+  EZIReflection(SubObject2, SubObject3)
 
   int a;
-  double b;
-  SubObject d;
+  double b[3];
+  SubObject *d;
 };
 
 EZIReflectionRegistration
@@ -87,8 +98,8 @@ void print(T object, std::string prefix = "")
 int main()
 {
   Object test;
-
-  print(test);
+  SubObject* temp = &test;
+  print(temp);
 
   return 0;
 }

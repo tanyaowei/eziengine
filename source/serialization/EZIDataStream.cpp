@@ -3,34 +3,34 @@
 
 namespace EZIEngine
 {
-DataStream::DataStream()
-    : mType(DATATYPE::NONE) {}
+  DataStream::DataStream()
+      : mType(DATATYPE::NONE) {}
 
-DataStream::~DataStream() {}
+  DataStream::~DataStream() {}
 
-template <>
-void DataStream::setValue<bool>(const bool &value)
-{
-  mValue = std::to_string(value);
-}
+  template <>
+  void DataStream::setValue<bool>(const bool &value)
+  {
+    mValue = std::to_string(value);
+  }
 
-template <>
-void DataStream::setValue<std::string>(const std::string &value)
-{
-  mValue = value;
-}
+  template <>
+  void DataStream::setValue<std::string>(const std::string &value)
+  {
+    mValue = value;
+  }
 
-template <>
-bool DataStream::getValue<bool>() const
-{
-  return std::stoi(mValue);
-}
+  template <>
+  bool DataStream::getValue<bool>() const
+  {
+    return std::stoi(mValue);
+  }
 
-template <>
-std::string DataStream::getValue<std::string>() const
-{
-  return mValue;
-}
+  template <>
+  std::string DataStream::getValue<std::string>() const
+  {
+    return mValue;
+  }
 
   DataStream write_atomic_types(const Reflection::type& t, const Reflection::variant& var)
   {
@@ -97,6 +97,20 @@ std::string DataStream::getValue<std::string>() const
 
     result.mType = DataStream::DATATYPE::OBJECT;
 
+    for(const auto& base : t.get_base_classes())
+    {
+      if(t.is_derived_from(base))
+      {
+        DataStream key;
+
+        key.setValue(base.get_name().to_string());
+
+        DataStream val = write_object_types(base, var);
+
+        result.mMap.emplace(key,val);
+      }
+    }
+
     for (const auto& prop : t.get_properties())
     {
       if (prop.get_metadata("NO_SERIALIZE")) continue;
@@ -108,11 +122,11 @@ std::string DataStream::getValue<std::string>() const
 
       DataStream key;
 
-      key.mValue = prop.get_name().to_string();
+      key.setValue(prop.get_name().to_string());
 
       DataStream val = write_variant(prop_value);
 
-      result.mMap.insert(std::make_pair(key,val));
+      result.mMap.emplace(key,val);
     }
 
     return result;
@@ -170,7 +184,7 @@ std::string DataStream::getValue<std::string>() const
   {
     auto value_type = var.get_type();
 
-    if(value_type.is_wrapper() == true)
+    if(value_type.is_wrapper())
     {
       return write_variant(var.extract_wrapped_value());
     }
@@ -179,22 +193,26 @@ std::string DataStream::getValue<std::string>() const
     {
       return write_atomic_types(value_type, var);
     }
-    else // list, map, object
+    else if(value_type.is_sequential_container())
     {
-      if(var.is_sequential_container())
+      return write_sequential_container(var.create_sequential_view());
+    }
+    else if(value_type.is_associative_container())
+    {
+      return write_associative_container(var.create_associative_view());
+    }
+    else // object
+    {
+      auto child_props = value_type.get_properties();
+
+      if(!child_props.empty())
       {
-        return write_sequential_container(var.create_sequential_view());
-      }
-      else if(var.is_associative_container())
-      {
-        return write_associative_container(var.create_associative_view());
-      }
-      else // object
-      {
-        return write_object_types(value_type,var);
+        Reflection::instance obj = Reflection::instance(var);
+
+        return write_object_types(obj.get_derived_type(),var);
       }
     }
-    
+
     return DataStream();
   }
 
