@@ -85,13 +85,15 @@ namespace EZIEngine
 
   DataStream write_atomic_types(const Reflection::type& t, const Reflection::variant& var);
 
-  DataStream write_object_types(const Reflection::type& t, const Reflection::variant& var);
+  DataStream write_object_types(const Reflection::type& t, const Reflection::instance& obj);
 
   DataStream write_sequential_container(const Reflection::variant_sequential_view& view);
 
   DataStream write_associative_container(const Reflection::variant_associative_view& view);
 
   DataStream write_variant(const Reflection::variant& var);
+
+  DataStream write_datastream(Reflection::instance obj);
 
   void printDataStream(const DataStream& value, std::string prefix = "");
 }

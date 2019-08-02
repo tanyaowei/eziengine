@@ -91,31 +91,17 @@ namespace EZIEngine
       return result;
   }
 
-  DataStream write_object_types(const Reflection::type& t, const Reflection::variant& var)
+  DataStream write_object_types(const Reflection::type& t, const Reflection::instance & obj)
   {
     DataStream result;
 
     result.mType = DataStream::DATATYPE::OBJECT;
 
-    for(const auto& base : t.get_base_classes())
-    {
-      if(t.is_derived_from(base))
-      {
-        DataStream key;
-
-        key.setValue(base.get_name().to_string());
-
-        DataStream val = write_object_types(base, var);
-
-        result.mMap.emplace(key,val);
-      }
-    }
-
     for (const auto& prop : t.get_properties())
     {
       if (prop.get_metadata("NO_SERIALIZE")) continue;
 
-      Reflection::variant prop_value = prop.get_value(var);
+      Reflection::variant prop_value = prop.get_value(obj);
 
       // cannot serialize, because we cannot retrieve the value
       if (!prop_value) continue; 
@@ -184,9 +170,27 @@ namespace EZIEngine
   {
     auto value_type = var.get_type();
 
-    if(value_type.is_wrapper())
+    if(value_type.is_pointer())
     {
-      return write_variant(var.extract_wrapped_value());
+      Reflection::variant temp(var);
+
+      if(temp.convert(value_type.get_raw_type()))
+      {
+        return write_variant(temp);
+      }
+      else
+      {
+        Reflection::instance obj = Reflection::instance(var);
+
+        Reflection::type obj_type = obj.get_derived_type();
+
+        auto child_props = obj_type.get_properties();
+
+        if(!child_props.empty())
+        {
+          return write_object_types(obj_type,obj);
+        }
+      }
     }
     else if (value_type.is_arithmetic() || value_type.is_enumeration()
           || value_type == Reflection::type::get<std::string>() )
@@ -203,17 +207,24 @@ namespace EZIEngine
     }
     else // object
     {
-      auto child_props = value_type.get_properties();
+      Reflection::instance obj = Reflection::instance(var);
+
+      Reflection::type obj_type = obj.get_derived_type();
+
+      auto child_props = obj_type.get_properties();
 
       if(!child_props.empty())
       {
-        Reflection::instance obj = Reflection::instance(var);
-
-        return write_object_types(obj.get_derived_type(),var);
+        return write_object_types(obj_type,obj);
       }
     }
 
     return DataStream();
+  }
+
+  DataStream write_datastream(Reflection::instance obj)
+  {
+    return write_object_types(obj.get_derived_type(),obj);
   }
 
   void printDataStream(const DataStream &value, std::string prefix)
