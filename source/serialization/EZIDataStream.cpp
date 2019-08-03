@@ -32,38 +32,36 @@ namespace EZIEngine
     return mValue;
   }
 
-  DataStream write_atomic_types(const Reflection::type& t, const Reflection::variant& var)
+  void write_basic_types(DataStream& data, const Reflection::type& t, const Reflection::variant& var)
   {
-      DataStream result;
-
-      result.mType = DataStream::DATATYPE::VALUE;
+      data.mType = DataStream::DATATYPE::VALUE;
 
       if (t.is_arithmetic())
       {
         if (t == Reflection::type::get<bool>())
-            result.setValue(var.to_bool());
+            data.setValue(var.to_bool());
         else if (t == Reflection::type::get<char>())
-            result.setValue(var.to_bool());
+            data.setValue(var.to_int8());
         else if (t == Reflection::type::get<int8_t>())
-            result.setValue(var.to_int8());
+            data.setValue(var.to_int8());
         else if (t == Reflection::type::get<int16_t>())
-            result.setValue(var.to_int16());
+            data.setValue(var.to_int16());
         else if (t == Reflection::type::get<int32_t>())
-            result.setValue(var.to_int32());
+            data.setValue(var.to_int32());
         else if (t == Reflection::type::get<int64_t>())
-            result.setValue(var.to_int64());
+            data.setValue(var.to_int64());
         else if (t == Reflection::type::get<uint8_t>())
-            result.setValue(var.to_uint8());
+            data.setValue(var.to_uint8());
         else if (t == Reflection::type::get<uint16_t>())
-            result.setValue(var.to_uint16());
+            data.setValue(var.to_uint16());
         else if (t == Reflection::type::get<uint32_t>())
-            result.setValue(var.to_uint32());
+            data.setValue(var.to_uint32());
         else if (t == Reflection::type::get<uint64_t>())
-            result.setValue(var.to_uint64());
+            data.setValue(var.to_uint64());
         else if (t == Reflection::type::get<float>())
-            result.setValue(var.to_double());
+            data.setValue(var.to_float());
         else if (t == Reflection::type::get<double>())
-            result.setValue(var.to_double());
+            data.setValue(var.to_double());
       }
       else if (t.is_enumeration())
       {
@@ -71,31 +69,27 @@ namespace EZIEngine
         auto enumstr = var.to_string(&ok);
         if (ok)
         {
-            result.setValue(enumstr);
+            data.setValue(enumstr);
         }
         else
         {
             ok = false;
             auto value = var.to_uint64(&ok);
             if (ok)
-                result.setValue(value);
+                data.setValue(value);
             else
-                result.setValue(std::string());
+                data.setValue(std::string());
         }
       }
       else if (t == Reflection::type::get<std::string>())
       {
-        result.setValue(var.to_string());
+        data.setValue(var.to_string());
       }
-
-      return result;
   }
 
-  DataStream write_object_types(const Reflection::type& t, const Reflection::instance & obj)
+  void write_object_types(DataStream& data, const Reflection::type& t, const Reflection::instance & obj)
   {
-    DataStream result;
-
-    result.mType = DataStream::DATATYPE::OBJECT;
+    data.mType = DataStream::DATATYPE::OBJECT;
 
     for (const auto& prop : t.get_properties())
     {
@@ -106,104 +100,88 @@ namespace EZIEngine
       // cannot serialize, because we cannot retrieve the value
       if (!prop_value) continue; 
 
-      DataStream key;
+      DataStream key, val;
 
       key.setValue(prop.get_name().to_string());
 
-      DataStream val = write_variant(prop_value);
+      write_variant(val, prop_value.get_type(), prop_value);
 
-      result.mMap.emplace(key,val);
+      data.mMap.emplace(key,val);
     }
-
-    return result;
   }
 
-  DataStream write_sequential_container(const Reflection::variant_sequential_view& view)
+  void write_sequential_container(DataStream& data, const Reflection::variant_sequential_view& view)
   {
-    DataStream result;
-
-    result.mType = DataStream::DATATYPE::LIST;
+    data.mType = DataStream::DATATYPE::LIST;
 
     for(const auto& item : view)
     {
-      DataStream temp = write_variant(item.extract_wrapped_value());
+      DataStream temp;
+      
+      write_variant(temp, item.get_type(), item);
 
-      result.mList.push_back(temp);
+      data.mList.push_back(temp);
     }
-
-    return result;
   }
 
-  DataStream write_associative_container(const Reflection::variant_associative_view& view)
+  void write_associative_container(DataStream& data, const Reflection::variant_associative_view& view)
   {
-    DataStream result;
-
     if (view.is_key_only_type())
     {
-      result.mType = DataStream::DATATYPE::LIST;
+      data.mType = DataStream::DATATYPE::LIST;
 
       for(const auto& item :view)
       {
-        DataStream temp = write_variant(item.first);
+        DataStream temp;
+        
+        write_variant(temp, item.first.get_type(), item.first);
 
-        result.mList.push_back(temp);
+        data.mList.push_back(temp);
       }
     }
     else
     {
-      result.mType = DataStream::DATATYPE::MAP;
+      data.mType = DataStream::DATATYPE::MAP;
       
       for(const auto& item :view)
       {
-        DataStream key = write_variant(item.first);
+        DataStream key, val;
+        
+        write_variant(key, item.first.get_type(),item.first);
+        write_variant(val, item.second.get_type(),item.second);
 
-        DataStream val = write_variant(item.second);
-
-        result.mMap.emplace(key,val);
+        data.mMap.emplace(key,val);
       }
     }
-
-    return result;
   }
 
-  DataStream write_variant(const Reflection::variant& var)
+  void write_variant(DataStream& data, const Reflection::type&value_type, const Reflection::variant& var)
   {
-    auto value_type = var.get_type();
-
     if(value_type.is_pointer())
     {
-      Reflection::variant temp(var);
-
-      if(temp.convert(value_type.get_raw_type()))
-      {
-        return write_variant(temp);
-      }
-      else
-      {
-        Reflection::instance obj = Reflection::instance(var);
-
-        Reflection::type obj_type = obj.get_derived_type();
-
-        auto child_props = obj_type.get_properties();
-
-        if(!child_props.empty())
-        {
-          return write_object_types(obj_type,obj);
-        }
-      }
+      write_variant(data, value_type.get_raw_type(),var);
+    }
+    else if(value_type.is_wrapper())
+    {
+      write_variant(data, value_type.get_wrapped_type(),var.extract_wrapped_value());
     }
     else if (value_type.is_arithmetic() || value_type.is_enumeration()
           || value_type == Reflection::type::get<std::string>() )
     {
-      return write_atomic_types(value_type, var);
+      Reflection::variant temp(var);
+
+      if(temp.convert(value_type))
+      {
+        write_basic_types(data, value_type, var); 
+      }
     }
     else if(value_type.is_sequential_container())
     {
-      return write_sequential_container(var.create_sequential_view());
+      write_sequential_container(data, var.create_sequential_view());
     }
     else if(value_type.is_associative_container())
     {
-      return write_associative_container(var.create_associative_view());
+      write_associative_container(data, var.create_associative_view());
     }
     else // object
     {
@@ -215,16 +193,104 @@ namespace EZIEngine
 
       if(!child_props.empty())
       {
-        return write_object_types(obj_type,obj);
+        write_object_types(data, obj_type,obj);
       }
     }
-
-    return DataStream();
   }
 
-  DataStream write_datastream(Reflection::instance obj)
+  void write_datastream(DataStream& data, Reflection::instance obj)
   {
-    return write_object_types(obj.get_derived_type(),obj);
+    write_object_types(data, obj.get_derived_type(),obj);
+  }
+
+  void read_basic_types(const DataStream& data, const Reflection::type& t, Reflection::variant& var)
+  {
+      if (t.is_arithmetic())
+      {
+        if (t == Reflection::type::get<bool>())
+            var = data.getValue<bool>();
+        else if (t == Reflection::type::get<char>())
+            var = data.getValue<char>();
+        else if (t == Reflection::type::get<int8_t>())
+            var = data.getValue<int8_t>();
+        else if (t == Reflection::type::get<int16_t>())
+            var = data.getValue<int16_t>();
+        else if (t == Reflection::type::get<int32_t>())
+            var = data.getValue<int32_t>();
+        else if (t == Reflection::type::get<int64_t>())
+            var = data.getValue<int64_t>();
+        else if (t == Reflection::type::get<uint8_t>())
+            var = data.getValue<uint8_t>();
+        else if (t == Reflection::type::get<uint16_t>())
+            var = data.getValue<uint16_t>();
+        else if (t == Reflection::type::get<uint32_t>())
+            var = data.getValue<uint32_t>();
+        else if (t == Reflection::type::get<uint64_t>())
+            var = data.getValue<uint64_t>();
+        else if (t == Reflection::type::get<float>())
+            var = data.getValue<float>();
+        else if (t == Reflection::type::get<double>())
+            var = data.getValue<double>();
+      }
+      else if (t.is_enumeration())
+      {
+        bool ok = false;
+        if (ok)
+        {
+            var = data.getValue<std::string>();
+        }
+        else
+        {
+            ok = false;
+            if (ok)
+                var = data.getValue<uint64_t>();
+            else
+                var = data.getValue<std::string>();
+        }
+      }
+      else if (t == Reflection::type::get<std::string>())
+      {
+        var = data.getValue<std::string>();
+      }
+  }
+
+  void read_object_types(const DataStream& data, const Reflection::type& t,  Reflection::instance& obj)
+  {
+
+  }
+
+  void read_sequential_container(const DataStream& data,  Reflection::variant_sequential_view& view)
+  {
+
+  }
+
+  void read_associative_container(const DataStream& data,  Reflection::variant_associative_view& view)
+  {
+
+  }
+
+  void read_variant(const DataStream& data, const Reflection::type&value_type, Reflection::variant& var)
+  {
+    switch (data.mType)
+    {
+    case DataStream::DATATYPE::VALUE:
+
+      break;
+    case DataStream::DATATYPE::OBJECT:
+
+      break;
+    case DataStream::DATATYPE::LIST:
+
+      break;
+    case DataStream::DATATYPE::MAP:
+
+      break;
+    }
+  }
+
+  void read_datastream(const DataStream& data, Reflection::instance obj)
+  {
+    read_object_types(data,obj.get_derived_type(),obj);
   }
 
   void printDataStream(const DataStream &value, std::string prefix)

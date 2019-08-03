@@ -83,17 +83,29 @@ namespace EZIEngine
   template <>
   std::string DataStream::getValue<std::string>() const;
 
-  DataStream write_atomic_types(const Reflection::type& t, const Reflection::variant& var);
+  void write_basic_types(DataStream& data, const Reflection::type& t, const Reflection::variant& var);
 
-  DataStream write_object_types(const Reflection::type& t, const Reflection::instance& obj);
+  void write_object_types(DataStream& data, const Reflection::type& t, const Reflection::instance& obj);
 
-  DataStream write_sequential_container(const Reflection::variant_sequential_view& view);
+  void write_sequential_container(DataStream& data, const Reflection::variant_sequential_view& view);
 
-  DataStream write_associative_container(const Reflection::variant_associative_view& view);
+  void write_associative_container(DataStream& data, const Reflection::variant_associative_view& view);
 
-  DataStream write_variant(const Reflection::variant& var);
+  void write_variant(DataStream& data, const Reflection::type&value_type,const Reflection::variant& var);
 
-  DataStream write_datastream(Reflection::instance obj);
+  void write_datastream(DataStream& data, Reflection::instance obj);
+
+  void read_basic_types(const DataStream& data, const Reflection::type& t, Reflection::variant& var);
+
+  void read_object_types(const DataStream& data, const Reflection::type& t, Reflection::instance& obj);
+
+  void read_sequential_container(const DataStream& data, Reflection::variant_sequential_view& view);
+
+  void read_associative_container(const DataStream& data, Reflection::variant_associative_view& view);
+
+  void read_variant(const DataStream& data, const Reflection::type&value_type,Reflection::variant& var);
+
+  void read_datastream(const DataStream& data, Reflection::instance obj);
 
   void printDataStream(const DataStream& value, std::string prefix = "");
 }

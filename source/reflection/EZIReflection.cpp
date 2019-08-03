@@ -17,16 +17,8 @@ T conv_type(T* value, bool&ok)
     }
 }
 
-int conv_func(int* value, bool& ok)
-{
-    std::cout << "conv_func: " << *value << std::endl;
-    ok = true;
-    return *value;
-}
-
 EZIReflectionRegistration
 {
-    EZIEngine::Reflection::type::register_converter_func(conv_func);
     EZIEngine::Reflection::type::register_converter_func(conv_type<bool>);
     EZIEngine::Reflection::type::register_converter_func(conv_type<char>);
     EZIEngine::Reflection::type::register_converter_func(conv_type<int8_t>);

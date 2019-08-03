@@ -39,15 +39,15 @@ private:
 class SubObject3
 {
   public:
-  SubObject3() :mPtr(new SubObject2()){}
+  SubObject3() :mPtr(new int(34325)){}
   ~SubObject3(){}
 
-  void setPtr(SubObject* val){ mPtr.reset(val); }
-  SubObject* getPtr()const { return mPtr.get(); }
+  void setPtr(int* val){ mPtr.reset(val); }
+  int* getPtr()const { return mPtr.get(); }
 
 private:
   EZIReflection()
-  std::unique_ptr<SubObject> mPtr;
+  std::unique_ptr<int> mPtr;
 };
 
 class Object :public SubObject2, public SubObject3
@@ -63,9 +63,8 @@ public:
 };
 
 template<typename T>
-T conv_type(T* value, bool&ok)
+T conv_ptr_type(T* value, bool&ok)
 {
-    std::cout << "conv_type: " << *value << std::endl;
     if (value)
     {
         ok = true;
@@ -78,20 +77,40 @@ T conv_type(T* value, bool&ok)
     }
 }
 
+template<typename T>
+T* conv_val_type(T value, bool&ok)
+{
+  ok = true;
+  return new T(value);
+}
+
 EZIReflectionRegistration
 {
-  EZIEngine::Reflection::type::register_converter_func(conv_type<bool>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<char>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<int8_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<int16_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<int32_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<int64_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<uint8_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<uint16_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<uint32_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<uint64_t>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<float>);
-  EZIEngine::Reflection::type::register_converter_func(conv_type<double>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<bool>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<char>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<int8_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<int16_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<int32_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<int64_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<uint8_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<uint16_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<uint32_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<uint64_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<float>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<double>);
+
+  /*EZIEngine::Reflection::type::register_converter_func(conv_val_type<bool>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<char>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<int8_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<int16_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<int32_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<int64_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<uint8_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<uint16_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<uint32_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<uint64_t>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<float>);
+  EZIEngine::Reflection::type::register_converter_func(conv_val_type<double>);*/
 
   EZIEngine::Reflection::registration::enumeration<Fruits>("Fruits")
   (
@@ -125,7 +144,9 @@ EZIReflectionRegistration
 template<typename T>
 void print(T object, std::string prefix = "")
 {
-    EZIEngine::DataStream datastream = EZIEngine::write_datastream(object);
+    EZIEngine::DataStream datastream;
+    
+    EZIEngine::write_datastream(datastream, object);
 
     EZIEngine::printDataStream(datastream, prefix);
 }
