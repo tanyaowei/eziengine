@@ -256,35 +256,116 @@ namespace EZIEngine
 
   void read_object_types(const DataStream& data, const Reflection::type& t,  Reflection::instance& obj)
   {
+    for (const auto& prop : t.get_properties())
+    {
+      if (prop.get_metadata("NO_SERIALIZE")) continue;
 
+      DataStream key;
+
+      key.setValue(prop.get_name().to_string());
+
+      auto it = data.mMap.find(key);
+
+      if(it != data.mMap.end())
+      {
+        Reflection::variant prop_value;
+
+        read_variant(it->second, prop_value.get_type(), prop_value);
+
+        // cannot serialize, because we cannot retrieve the value
+        if (!prop_value) continue; 
+
+        prop.set_value(obj,prop_value);
+      }
+    }
   }
 
   void read_sequential_container(const DataStream& data,  Reflection::variant_sequential_view& view)
   {
-
+    view.set_size(data.mList.size());
+    const Reflection::type value_type = view.get_rank_type(1);
+    for(size_t i = 0; i < data.mList.size(); ++i)
+    {
+      Reflection::variant temp;
+      read_variant(data.mList[i], value_type,temp);
+      view.set_value(i, temp);
+    }
   }
 
   void read_associative_container(const DataStream& data,  Reflection::variant_associative_view& view)
   {
-
+    switch (data.mType)
+    {
+    case DataStream::DATATYPE::LIST:
+    {
+      const Reflection::type key_type = view.get_key_type();
+      for(size_t i = 0; i < data.mList.size(); ++i)
+      {
+        Reflection::variant key;
+        read_variant(data.mList[i], key_type,key);
+        view.insert(key);
+      }
+    }
+    break;
+    case DataStream::DATATYPE::MAP:
+    {
+      const Reflection::type key_type = view.get_key_type();
+      const Reflection::type value_type = view.get_value_type();
+      for(const auto& elem: data.mMap)
+      {
+        Reflection::variant key, val;
+        read_variant(elem.first, key_type,key);
+        read_variant(elem.second, value_type,val);
+        view.insert(key,val);
+      }
+    }
+    break;
+    }
   }
 
   void read_variant(const DataStream& data, const Reflection::type&value_type, Reflection::variant& var)
   {
-    switch (data.mType)
+    if(value_type.is_pointer())
     {
-    case DataStream::DATATYPE::VALUE:
+      read_variant(data, value_type.get_raw_type(),var);
 
-      break;
-    case DataStream::DATATYPE::OBJECT:
+      var.convert(value_type);
+    }
+    else if(value_type.is_wrapper())
+    {
+      read_variant(data, value_type.get_wrapped_type(),var);
 
-      break;
-    case DataStream::DATATYPE::LIST:
+      var.convert(value_type);
+    }
+    else if (value_type.is_arithmetic() || value_type.is_enumeration()
+          || value_type == Reflection::type::get<std::string>() )
+    {
+      read_basic_types(data, value_type, var); 
+    }
+    else if(value_type.is_sequential_container())
+    {
+      Reflection::variant_sequential_view view = var.create_sequential_view();
 
-      break;
-    case DataStream::DATATYPE::MAP:
+      read_sequential_container(data, view);
+    }
+    else if(value_type.is_associative_container())
+    {
+      Reflection::variant_associative_view view = var.create_associative_view();
 
-      break;
+      read_associative_container(data, view);
+    }
+    else // object
+    {
+      Reflection::instance obj = Reflection::instance(var);
+
+      Reflection::type obj_type = obj.get_derived_type();
+
+      auto child_props = obj_type.get_properties();
+
+      if(!child_props.empty())
+      {
+        read_object_types(data, obj_type,obj);
+      }
     }
   }
 
