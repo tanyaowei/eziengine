@@ -3,6 +3,7 @@
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
+#include <rttr/enumeration.h>
 #include <rttr/type>
 
 namespace EZIEngine

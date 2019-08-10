@@ -69,16 +69,11 @@ namespace EZIEngine
         auto enumstr = var.to_string(&ok);
         if (ok)
         {
-            data.setValue(enumstr);
+          data.setValue(enumstr);
         }
         else
         {
-            ok = false;
-            auto value = var.to_uint64(&ok);
-            if (ok)
-                data.setValue(value);
-            else
-                data.setValue(std::string());
+          data.setValue(std::string());
         }
       }
       else if (t == Reflection::type::get<std::string>())
@@ -90,6 +85,8 @@ namespace EZIEngine
   void write_object_types(DataStream& data, const Reflection::type& t, const Reflection::instance & obj)
   {
     data.mType = DataStream::DATATYPE::OBJECT;
+
+    data.mObjType = t.get_name().to_string();
 
     for (const auto& prop : t.get_properties())
     {
@@ -198,11 +195,6 @@ namespace EZIEngine
     }
   }
 
-  void write_datastream(DataStream& data, Reflection::instance obj)
-  {
-    write_object_types(data, obj.get_derived_type(),obj);
-  }
-
   void read_basic_types(const DataStream& data, const Reflection::type& t, Reflection::variant& var)
   {
       if (t.is_arithmetic())
@@ -234,19 +226,9 @@ namespace EZIEngine
       }
       else if (t.is_enumeration())
       {
-        bool ok = false;
-        if (ok)
-        {
-            var = data.getValue<std::string>();
-        }
-        else
-        {
-            ok = false;
-            if (ok)
-                var = data.getValue<uint64_t>();
-            else
-                var = data.getValue<std::string>();
-        }
+        Reflection::enumeration enum_list = t.get_enumeration();
+
+        var = enum_list.name_to_value(data.getValue<std::string>());
       }
       else if (t == Reflection::type::get<std::string>())
       {
@@ -288,7 +270,10 @@ namespace EZIEngine
     {
       Reflection::variant temp;
       read_variant(data.mList[i], value_type,temp);
-      view.set_value(i, temp);
+      if (temp.convert(value_type))
+      {
+        view.set_value(i, temp);
+      }
     }
   }
 
@@ -303,7 +288,10 @@ namespace EZIEngine
       {
         Reflection::variant key;
         read_variant(data.mList[i], key_type,key);
-        view.insert(key);
+        if (key.convert(key_type))
+        {
+          view.insert(key);
+        }
       }
     }
     break;
@@ -316,9 +304,14 @@ namespace EZIEngine
         Reflection::variant key, val;
         read_variant(elem.first, key_type,key);
         read_variant(elem.second, value_type,val);
-        view.insert(key,val);
+        if (key.convert(key_type) && val.convert(value_type))
+        {
+          view.insert(key,val);
+        }
       }
     }
+    break;
+    default:
     break;
     }
   }
@@ -327,6 +320,8 @@ namespace EZIEngine
   {
     if(value_type.is_pointer())
     {
+      std::cout << value_type.get_name() << std::endl;
+
       read_variant(data, value_type.get_raw_type(),var);
 
       var.convert(value_type);
@@ -340,7 +335,11 @@ namespace EZIEngine
     else if (value_type.is_arithmetic() || value_type.is_enumeration()
           || value_type == Reflection::type::get<std::string>() )
     {
-      read_basic_types(data, value_type, var); 
+      std::cout << value_type.get_name() << std::endl;
+
+      read_basic_types(data, value_type, var);
+
+      var.convert(value_type);
     }
     else if(value_type.is_sequential_container())
     {
@@ -356,6 +355,12 @@ namespace EZIEngine
     }
     else // object
     {
+      std::cout << value_type.get_name() << std::endl;
+
+      var = Reflection::type::get_by_name(Reflection::string_view(data.mObjType));
+
+      std::cout << data.mObjType << std::endl;
+
       Reflection::instance obj = Reflection::instance(var);
 
       Reflection::type obj_type = obj.get_derived_type();
@@ -365,13 +370,10 @@ namespace EZIEngine
       if(!child_props.empty())
       {
         read_object_types(data, obj_type,obj);
+
+        var.convert(value_type);
       }
     }
-  }
-
-  void read_datastream(const DataStream& data, Reflection::instance obj)
-  {
-    read_object_types(data,obj.get_derived_type(),obj);
   }
 
   void printDataStream(const DataStream &value, std::string prefix)

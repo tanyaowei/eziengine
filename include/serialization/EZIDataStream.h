@@ -65,6 +65,7 @@ namespace EZIEngine
     }
 
     std::string mValue;
+    std::string mObjType;
     std::vector<DataStream> mList;
     std::map<DataStream, DataStream> mMap;
 
@@ -93,7 +94,13 @@ namespace EZIEngine
 
   void write_variant(DataStream& data, const Reflection::type&value_type,const Reflection::variant& var);
 
-  void write_datastream(DataStream& data, Reflection::instance obj);
+  template<typename T>
+  void write_datastream(DataStream& data, const T& value)
+  {
+    Reflection::variant temp(value);
+
+    write_variant(data, temp.get_type() ,temp);
+  }
 
   void read_basic_types(const DataStream& data, const Reflection::type& t, Reflection::variant& var);
 
@@ -106,6 +113,14 @@ namespace EZIEngine
   void read_variant(const DataStream& data, const Reflection::type&value_type,Reflection::variant& var);
 
   void read_datastream(const DataStream& data, Reflection::instance obj);
+
+  template<typename T>
+  void read_datastream(const DataStream& data, T& value)
+  {
+    Reflection::variant temp(value);
+
+    read_variant(data,temp.get_type() ,temp);
+  }
 
   void printDataStream(const DataStream& value, std::string prefix = "");
 }

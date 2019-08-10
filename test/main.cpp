@@ -12,6 +12,20 @@ enum Fruits
   GRAPES,
 };
 
+class SubObject3
+{
+  public:
+  SubObject3() :mPtr(new Fruits()){}
+  ~SubObject3(){}
+
+  void setPtr(Fruits* val){ mPtr.reset(val); }
+  Fruits* getPtr()const { return mPtr.get(); }
+
+private:
+  EZIReflection()
+  std::unique_ptr<Fruits> mPtr;
+};
+
 class SubObject
 {
 public:
@@ -20,8 +34,26 @@ public:
 
   EZIReflection()
 
+  void setE(std::vector<SubObject3*> val)
+  { 
+    e.clear();
+    for(auto& elem: val)
+    {
+      e.emplace_back(elem);
+    }
+  }
+  std::vector<SubObject3*> getE() const 
+  { 
+    std::vector<SubObject3*> result;
+    for(const auto& elem: e)
+    {
+      result.push_back(elem.get());
+    }
+    return result; 
+  }
+public:
   double s;
-  std::vector<Fruits> e;
+  std::vector<std::unique_ptr<SubObject3>> e;
   Fruits g;
 };
 
@@ -36,20 +68,6 @@ private:
   double f;
 };
 
-class SubObject3
-{
-  public:
-  SubObject3() :mPtr(new int(34325)){}
-  ~SubObject3(){}
-
-  void setPtr(int* val){ mPtr.reset(val); }
-  int* getPtr()const { return mPtr.get(); }
-
-private:
-  EZIReflection()
-  std::unique_ptr<int> mPtr;
-};
-
 class Object :public SubObject2, public SubObject3
 {
 public:
@@ -57,7 +75,7 @@ public:
   ~Object(){ }
   
   EZIReflection(SubObject2, SubObject3)
-
+public:
   int a;
   double b[3];
 };
@@ -118,11 +136,12 @@ EZIReflectionRegistration
     EZIEngine::Reflection::value("ORANGE",Fruits::ORANGE),
     EZIEngine::Reflection::value("GRAPES",Fruits::GRAPES)
   );
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<Fruits>);
 
    EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
   .constructor<>()
   .property("SubObject::s", &SubObject::s)
-  .property("SubObject::e", &SubObject::e)
+  .property("SubObject::e", &SubObject::getE, &SubObject::setE)
   .property("SubObject::g", &SubObject::g);
 
    EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
@@ -144,16 +163,30 @@ EZIReflectionRegistration
 template<typename T>
 void print(T object, std::string prefix = "")
 {
-    EZIEngine::DataStream datastream;
+    EZIEngine::DataStream datastream1, datastream2;
     
-    EZIEngine::write_datastream(datastream, object);
+    EZIEngine::write_datastream(datastream1, object);
 
-    EZIEngine::printDataStream(datastream, prefix);
+    //EZIEngine::printDataStream(datastream1, prefix);
+
+    T temp;
+
+    EZIEngine::read_datastream(datastream1, temp);
+
+    EZIEngine::write_datastream(datastream2, temp);
+
+    EZIEngine::printDataStream(datastream2, prefix);
 }
 
 int main()
 {
-  std::unique_ptr<SubObject> test = std::make_unique<Object>();
+  Object* obj = new Object();
+  obj->setPtr(new Fruits(Fruits::GRAPES));
+  obj->a = 47;
+  obj->e.clear();
+  //obj->e.emplace_back(new SubObject3());
+  //obj->e.emplace_back(new SubObject3());
+  std::unique_ptr<SubObject> test(obj);
   print(test.get());
 
   return 0;
