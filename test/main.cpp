@@ -15,15 +15,14 @@ enum Fruits
 class SubObject3
 {
   public:
-  SubObject3() :mPtr(new Fruits()){}
+  SubObject3() :mPtr(new Fruits(Fruits::APPLE)){}
   ~SubObject3(){}
 
-  void setPtr(Fruits* val){ mPtr.reset(val); }
-  Fruits* getPtr()const { return mPtr.get(); }
+  std::shared_ptr<Fruits> mPtr;
 
 private:
   EZIReflection()
-  std::unique_ptr<Fruits> mPtr;
+
 };
 
 class SubObject
@@ -45,7 +44,7 @@ public:
   std::vector<SubObject3*> getE() const 
   { 
     std::vector<SubObject3*> result;
-    for(const auto& elem: e)
+    for(auto& elem: e)
     {
       result.push_back(elem.get());
     }
@@ -150,7 +149,7 @@ EZIReflectionRegistration
 
   EZIEngine::Reflection::registration::class_<SubObject3>("SubObject3")
   .constructor<>()
-  .property("SubObject3::mPtr", &SubObject3::getPtr, &SubObject3::setPtr);
+  .property("SubObject3::mPtr", &SubObject3::mPtr);
 
    EZIEngine::Reflection::registration::class_<Object>("Object")
   .constructor<>()
@@ -163,30 +162,28 @@ EZIReflectionRegistration
 template<typename T>
 void print(T object, std::string prefix = "")
 {
-    EZIEngine::DataStream datastream1, datastream2;
-    
-    EZIEngine::write_datastream(datastream1, object);
+  EZIEngine::DataStream datastream;
+  
+  EZIEngine::write_datastream(datastream, object);
 
-    //EZIEngine::printDataStream(datastream1, prefix);
-
-    T temp;
-
-    EZIEngine::read_datastream(datastream1, temp);
-
-    EZIEngine::write_datastream(datastream2, temp);
-
-    EZIEngine::printDataStream(datastream2, prefix);
+  EZIEngine::printDataStream(datastream, prefix);
 }
 
 int main()
 {
   Object* obj = new Object();
-  obj->setPtr(new Fruits(Fruits::GRAPES));
+  obj->mPtr.reset(new Fruits(Fruits::GRAPES));
   obj->a = 47;
   obj->e.clear();
-  //obj->e.emplace_back(new SubObject3());
-  //obj->e.emplace_back(new SubObject3());
+  obj->e.emplace_back(new SubObject3());
+  obj->e.emplace_back(new SubObject3());
   std::unique_ptr<SubObject> test(obj);
+
+  //EZIEngine::DataStream datastream;
+  //EZIEngine::write_datastream(datastream, test.get());
+  //SubObject* temp = nullptr;
+  //EZIEngine::read_datastream(datastream, temp);
+
   print(test.get());
 
   return 0;

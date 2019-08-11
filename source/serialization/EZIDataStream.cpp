@@ -159,7 +159,7 @@ namespace EZIEngine
       write_variant(data, value_type.get_raw_type(),var);
     }
     else if(value_type.is_wrapper())
-    {
+    {      
       write_variant(data, value_type.get_wrapped_type(),var.extract_wrapped_value());
     }
     else if (value_type.is_arithmetic() || value_type.is_enumeration()
@@ -169,7 +169,7 @@ namespace EZIEngine
 
       if(temp.convert(value_type))
       {
-        write_basic_types(data, value_type, var); 
+        write_basic_types(data, value_type, temp); 
       }
     }
     else if(value_type.is_sequential_container())
@@ -250,9 +250,9 @@ namespace EZIEngine
 
       if(it != data.mMap.end())
       {
-        Reflection::variant prop_value;
+        Reflection::variant prop_value  = prop.get_value(obj);
 
-        read_variant(it->second, prop_value.get_type(), prop_value);
+        read_variant(it->second, prop.get_type(), prop_value);
 
         // cannot serialize, because we cannot retrieve the value
         if (!prop_value) continue; 
@@ -320,14 +320,37 @@ namespace EZIEngine
   {
     if(value_type.is_pointer())
     {
-      std::cout << value_type.get_name() << std::endl;
+      std::cout << "POINTER: " << value_type.get_name().to_string() << std::endl;
 
-      read_variant(data, value_type.get_raw_type(),var);
+      Reflection::type temp_type = value_type.get_raw_type();
 
-      var.convert(value_type);
+      if (temp_type.is_arithmetic() || temp_type.is_enumeration()
+            || temp_type == Reflection::type::get<std::string>() )
+      {
+        read_variant(data, temp_type,var);
+
+        var.convert(value_type);
+      }
+      else
+      {
+        Reflection::type obj_type = Reflection::type::get_by_name(Reflection::string_view(data.mObjType));
+        
+        std::cout << "OBJECT: " << obj_type.get_name().to_string() << std::endl;
+
+        Reflection::variant obj_var = obj_type.create();
+
+        read_variant(data, obj_type,obj_var);
+
+        if(obj_var.convert(value_type))
+        {
+          var = obj_var;
+        }
+      }
     }
     else if(value_type.is_wrapper())
     {
+      std::cout << "WRAPPER: " << value_type.get_name().to_string() << std::endl;
+
       read_variant(data, value_type.get_wrapped_type(),var);
 
       var.convert(value_type);
@@ -335,43 +358,46 @@ namespace EZIEngine
     else if (value_type.is_arithmetic() || value_type.is_enumeration()
           || value_type == Reflection::type::get<std::string>() )
     {
-      std::cout << value_type.get_name() << std::endl;
+      std::cout << "BASIC: " << value_type.get_name().to_string() << std::endl;
 
       read_basic_types(data, value_type, var);
 
-      var.convert(value_type);
+      if(!var.convert(value_type))
+      {
+        std::cout << "ISSUE!" << std::endl;
+      }
     }
     else if(value_type.is_sequential_container())
     {
+      std::cout << "ARRAY: " << value_type.get_name().to_string() << std::endl;
+
       Reflection::variant_sequential_view view = var.create_sequential_view();
 
       read_sequential_container(data, view);
     }
     else if(value_type.is_associative_container())
     {
+      std::cout << "MAP: " << value_type.get_name().to_string() << std::endl;
+
       Reflection::variant_associative_view view = var.create_associative_view();
 
       read_associative_container(data, view);
     }
     else // object
     {
-      std::cout << value_type.get_name() << std::endl;
-
-      var = Reflection::type::get_by_name(Reflection::string_view(data.mObjType));
-
-      std::cout << data.mObjType << std::endl;
+      std::cout << "OBJECT BEFORE: " << value_type.get_name() << std::endl;
 
       Reflection::instance obj = Reflection::instance(var);
 
-      Reflection::type obj_type = obj.get_derived_type();
-
-      auto child_props = obj_type.get_properties();
+      auto child_props = value_type.get_properties();
 
       if(!child_props.empty())
       {
-        read_object_types(data, obj_type,obj);
+        std::cout << "OBJECT AFTER: " << value_type.get_name() << std::endl;
 
-        var.convert(value_type);
+        //if(value_type.get_name().to_string() == std::string("SubObject3")) return;
+
+        read_object_types(data, value_type,obj);
       }
     }
   }
