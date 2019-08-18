@@ -335,15 +335,39 @@ namespace EZIEngine
       {
         Reflection::type obj_type = Reflection::type::get_by_name(Reflection::string_view(data.mObjType));
         
-        std::cout << "OBJECT: " << obj_type.get_name().to_string() << std::endl;
+        //std::cout << "OBJECT: " << obj_type.get_name().to_string() << std::endl;
 
-        Reflection::variant obj_var = obj_type.create();
+        //Reflection::variant temp = obj_type.create();
 
-        read_variant(data, obj_type,obj_var);
+        //std::cout << "OBJECT: " << temp.get_type().get_name().to_string() << std::endl;
 
-        if(obj_var.convert(value_type))
+        //read_variant(data, obj_type,temp.get_value());
+
+        //if(temp.convert(value_type))
+        //{
+        //  var = temp;
+        //}
+
+        Reflection::variant temp = obj_type.create();
+
+        Reflection::instance obj = Reflection::instance(temp);
+
+        auto child_props = obj_type.get_properties();
+
+        if(!child_props.empty())
         {
-          var = obj_var;
+          std::cout << "OBJECT: " << obj.get_type().get_name() << std::endl;
+
+          //if(value_type.get_name().to_string() == std::string("SubObject3")) return;
+
+          read_object_types(data, obj_type,obj);
+
+          if(temp.convert(value_type))
+          {
+            std::cout << "convert: " << value_type.get_name() << std::endl;
+
+            var = temp;
+          }
         }
       }
     }
@@ -362,10 +386,7 @@ namespace EZIEngine
 
       read_basic_types(data, value_type, var);
 
-      if(!var.convert(value_type))
-      {
-        std::cout << "ISSUE!" << std::endl;
-      }
+      var.convert(value_type);
     }
     else if(value_type.is_sequential_container())
     {
@@ -393,11 +414,13 @@ namespace EZIEngine
 
       if(!child_props.empty())
       {
-        std::cout << "OBJECT AFTER: " << value_type.get_name() << std::endl;
+        std::cout << "OBJECT AFTER: " << obj.get_type().get_name() << std::endl;
 
         //if(value_type.get_name().to_string() == std::string("SubObject3")) return;
 
         read_object_types(data, value_type,obj);
+
+        var.convert(value_type);
       }
     }
   }

@@ -171,20 +171,25 @@ void print(T object, std::string prefix = "")
 
 int main()
 {
-  Object* obj = new Object();
-  obj->mPtr.reset(new Fruits(Fruits::GRAPES));
-  obj->a = 47;
-  obj->e.clear();
-  obj->e.emplace_back(new SubObject3());
-  obj->e.emplace_back(new SubObject3());
-  std::unique_ptr<SubObject> test(obj);
+  //Object* obj = new Object();
+  //obj->mPtr.reset(new Fruits(Fruits::GRAPES));
+  //obj->a = 47;
+  //obj->e.clear();
+  //obj->e.emplace_back(new SubObject3());
+  //obj->e.emplace_back(new SubObject3());
+  //std::unique_ptr<SubObject> test(obj);
 
+  //SubObject* temp = test.get();
   //EZIEngine::DataStream datastream;
-  //EZIEngine::write_datastream(datastream, test.get());
-  //SubObject* temp = nullptr;
+  //EZIEngine::write_datastream(datastream, temp);
+  //temp = nullptr;
   //EZIEngine::read_datastream(datastream, temp);
 
-  print(test.get());
+  //print(temp);
+
+  std::cout << "EZIEngine::Serializer" << std::endl;
+  EZIEngine::Serializer serializer;
+  serializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
 
   return 0;
 }

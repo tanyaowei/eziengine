@@ -97,9 +97,9 @@ namespace EZIEngine
   template<typename T>
   void write_datastream(DataStream& data, const T& value)
   {
-    Reflection::variant temp(value);
+    Reflection::instance obj(value);
 
-    write_variant(data, temp.get_type() ,temp);
+    write_object_types(data,obj.get_derived_type(),obj);
   }
 
   void read_basic_types(const DataStream& data, const Reflection::type& t, Reflection::variant& var);
@@ -117,9 +117,13 @@ namespace EZIEngine
   template<typename T>
   void read_datastream(const DataStream& data, T& value)
   {
-    Reflection::variant temp(value);
+    Reflection::type obj_type = Reflection::type::get_by_name(Reflection::string_view(data.mObjType));
 
-    read_variant(data,temp.get_type() ,temp);
+    Reflection::instance var = obj_type.create();
+
+    Reflection::instance obj = var;
+
+    read_object_types(data,obj.get_derived_type() ,obj);
   }
 
   void printDataStream(const DataStream& value, std::string prefix = "");
