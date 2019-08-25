@@ -37,7 +37,8 @@ namespace EZIEngine
     class Serializer: public Reflection::visitor
     {
         public:
-
+        Serializer(void* obj)
+        :mObj(obj){}
     /////////////////////////////////////////////////////////////////////////////////////
 
         template<typename T, typename...Base_Classes>
@@ -88,7 +89,22 @@ namespace EZIEngine
             std::cout << "visit_property: ";
             std::cout << info.property_item.get_name().to_string() << " - ";
             std::cout << info.property_item.get_type().get_name().to_string() << std::endl;
-            //info.property_accessor()
+            using declaring_type_t = typename property_info<T>::declaring_type;
+            std::cout << typeid(declaring_type_t).name() << std::endl;
+            //write_types(info.property_item.get_type());
+            if(info.property_item.get_type().is_sequential_container())
+            {
+            //std::cout << typeid((reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor)[0]).name() << std::endl;
+                Reflection::variant var = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
+                Reflection::variant_sequential_view view = var.create_sequential_view();
+                for(const auto& item : view)
+                {
+                    //std::cout << item.get_type().get_name().to_string() << std::endl;
+                    std::cout << item.get_type().get_wrapped_type().get_name().to_string() << std::endl;
+                    std::cout << item.extract_wrapped_value().to_double() << std::endl;
+                }
+            }
+
         }
 
         template<typename T>
@@ -116,9 +132,98 @@ private:
             return Reflection::type::template get<T>().get_name().to_string();
         }
 
-private:
+        void write_basic_types(const Reflection::type& t)
+        {
+            if (t.is_arithmetic())
+            {
+                #if 0
+                if (t == Reflection::type::get<bool>())
+                    data.setValue(var.to_bool());
+                else if (t == Reflection::type::get<char>())
+                    data.setValue(var.to_int8());
+                else if (t == Reflection::type::get<int8_t>())
+                    data.setValue(var.to_int8());
+                else if (t == Reflection::type::get<int16_t>())
+                    data.setValue(var.to_int16());
+                else if (t == Reflection::type::get<int32_t>())
+                    data.setValue(var.to_int32());
+                else if (t == Reflection::type::get<int64_t>())
+                    data.setValue(var.to_int64());
+                else if (t == Reflection::type::get<uint8_t>())
+                    data.setValue(var.to_uint8());
+                else if (t == Reflection::type::get<uint16_t>())
+                    data.setValue(var.to_uint16());
+                else if (t == Reflection::type::get<uint32_t>())
+                    data.setValue(var.to_uint32());
+                else if (t == Reflection::type::get<uint64_t>())
+                    data.setValue(var.to_uint64());
+                else if (t == Reflection::type::get<float>())
+                    data.setValue(var.to_float());
+                else if (t == Reflection::type::get<double>())
+                    data.setValue(var.to_double());
+                    #else
+                    std::cout << "is_arithmetic" << std::endl;
+                    #endif
+            }
+            else if (t.is_enumeration())
+            {
+                #if 0
+                bool ok = false;
+                auto enumstr = var.to_string(&ok);
+                if (ok)
+                {
+                data.setValue(enumstr);
+                }
+                else
+                {
+                data.setValue(std::string());
+                }
+                #else
+                std::cout << "is_enumeration" << std::endl;
+                #endif
+            }
+            else if (t == Reflection::type::get<std::string>())
+            {
+                //data.setValue(var.to_string());
+                std::cout << "is_string" << std::endl;
+            }
+        }
 
+        void write_types(const Reflection::type&value_type)
+        {
+            if(value_type.is_pointer())
+            {
+                std::cout << "is_pointer" << std::endl;
+                //write_types(value_type.get_raw_type());
+            }
+            else if(value_type.is_wrapper())
+            {      
+              std::cout << "is_wrapper" << std::endl;
+                //write_types(value_type.get_wrapped_type());
+            }
+            else if (value_type.is_arithmetic() || value_type.is_enumeration()
+                || value_type == Reflection::type::get<std::string>() )
+            {
+                write_basic_types(value_type); 
+            }
+            else if(value_type.is_sequential_container())
+            {
+                std::cout << "is_sequential_container" << std::endl;
+            }
+            else if(value_type.is_associative_container())
+            {
+                std::cout << "is_associative_container" << std::endl;
+            }
+            else // object
+            {
+                std::cout << "is_object" << std::endl;
+            }
+        }
+
+private:
         EZIReflection(visitor)
+
+        void* mObj;
     };
 
     class Deserializer: public Reflection::visitor

@@ -171,7 +171,7 @@ void print(T object, std::string prefix = "")
 
 int main()
 {
-  //Object* obj = new Object();
+  Object* obj = new Object();
   //obj->mPtr.reset(new Fruits(Fruits::GRAPES));
   //obj->a = 47;
   //obj->e.clear();
@@ -188,7 +188,7 @@ int main()
   //print(temp);
 
   std::cout << "EZIEngine::Serializer" << std::endl;
-  EZIEngine::Serializer serializer;
+  EZIEngine::Serializer serializer(obj);
   serializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
 
   return 0;
