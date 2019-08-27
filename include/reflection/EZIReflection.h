@@ -83,6 +83,18 @@ namespace EZIEngine
 
     /////////////////////////////////////////////////////////////////////////////////////
 
+        template<typename U>
+        void printArr(U& val)
+        {
+            std::cout << val<< std::endl;
+        }
+
+        template<typename U>
+        void printArr(U* val)
+        {
+            std::cout << val[1] << std::endl;
+        }
+
         template<typename T>
         void visit_property(const property_info<T>& info)
         {
@@ -90,19 +102,23 @@ namespace EZIEngine
             std::cout << info.property_item.get_name().to_string() << " - ";
             std::cout << info.property_item.get_type().get_name().to_string() << std::endl;
             using declaring_type_t = typename property_info<T>::declaring_type;
-            std::cout << typeid(declaring_type_t).name() << std::endl;
+            //std::cout << typeid(declaring_type_t).name() << std::endl;
             //write_types(info.property_item.get_type());
             if(info.property_item.get_type().is_sequential_container())
             {
-            //std::cout << typeid((reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor)[0]).name() << std::endl;
-                Reflection::variant var = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
-                Reflection::variant_sequential_view view = var.create_sequential_view();
-                for(const auto& item : view)
-                {
-                    //std::cout << item.get_type().get_name().to_string() << std::endl;
-                    std::cout << item.get_type().get_wrapped_type().get_name().to_string() << std::endl;
-                    std::cout << item.extract_wrapped_value().to_double() << std::endl;
-                }
+                auto& accessor = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
+                //std::cout << "accessor " << accessor[1] << std::endl;
+                double testArr[3];
+                std::cout << typeid(reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor).name() << std::endl;
+                printArr(accessor);
+                //Reflection::variant var = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
+                //Reflection::variant_sequential_view view = var.create_sequential_view();
+                //for(const auto& item : view)
+                //{
+                //    //std::cout << item.get_type().get_name().to_string() << std::endl;
+                //    std::cout << item.get_type().get_wrapped_type().get_name().to_string() << std::endl;
+                //    std::cout << item.extract_wrapped_value().to_double() << std::endl;
+                //}
             }
 
         }
