@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "debugDesktop",
+            "name": "debugUbuntu",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/ezitest",
@@ -22,7 +22,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "debugDesktopBuild"
+            "preLaunchTask": "debugUbuntuBuild"
         }
     ]
 }

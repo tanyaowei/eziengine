@@ -2,6 +2,7 @@
 #define _EZI_REFLECTION_H_
 
 #include <rttr/visitor.h>
+#include <iterator>
 
 namespace EZIEngine
 {
@@ -83,42 +84,46 @@ namespace EZIEngine
 
     /////////////////////////////////////////////////////////////////////////////////////
 
-        template<typename U>
-        void printArr(U& val)
-        {
-            std::cout << val<< std::endl;
-        }
-
-        template<typename U>
-        void printArr(U* val)
-        {
-            std::cout << val[1] << std::endl;
-        }
-
         template<typename T>
         void visit_property(const property_info<T>& info)
         {
             std::cout << "visit_property: ";
             std::cout << info.property_item.get_name().to_string() << " - ";
             std::cout << info.property_item.get_type().get_name().to_string() << std::endl;
-            using declaring_type_t = typename property_info<T>::declaring_type;
+
             //std::cout << typeid(declaring_type_t).name() << std::endl;
             //write_types(info.property_item.get_type());
-            if(info.property_item.get_type().is_sequential_container())
+
+            using declaring_type_t = typename property_info<T>::declaring_type;
+            Reflection::type value_type = info.property_item.get_type();
+            const auto& accessor = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
+
+            if(value_type.is_pointer())
             {
-                auto& accessor = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
-                //std::cout << "accessor " << accessor[1] << std::endl;
-                double testArr[3];
-                std::cout << typeid(reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor).name() << std::endl;
-                printArr(accessor);
-                //Reflection::variant var = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
-                //Reflection::variant_sequential_view view = var.create_sequential_view();
-                //for(const auto& item : view)
-                //{
-                //    //std::cout << item.get_type().get_name().to_string() << std::endl;
-                //    std::cout << item.get_type().get_wrapped_type().get_name().to_string() << std::endl;
-                //    std::cout << item.extract_wrapped_value().to_double() << std::endl;
-                //}
+                std::cout << "is_pointer" << std::endl;
+                //write_types(value_type.get_raw_type());
+            }
+            else if(value_type.is_wrapper())
+            {      
+              std::cout << "is_wrapper" << std::endl;
+                //write_types(value_type.get_wrapped_type());
+            }
+            else if (value_type.is_arithmetic() || value_type.is_enumeration()
+                || value_type == Reflection::type::get<std::string>() )
+            {
+                write_basic_types(value_type); 
+            }
+            else if(value_type.is_sequential_container())
+            {
+                printArr(&accessor);
+            }
+            else if(value_type.is_associative_container())
+            {
+                std::cout << "is_associative_container" << std::endl;
+            }
+            else // object
+            {
+                std::cout << "is_object" << std::endl;
             }
 
         }
@@ -146,6 +151,51 @@ private:
         static std::string get_type_name()
         {
             return Reflection::type::template get<T>().get_name().to_string();
+        }
+
+        template<typename U>
+        void printIter(const U start, const U last)
+        {
+            for(auto it = start; it != last; ++it)
+            {
+                std::cout << *it << std::endl;
+            }
+        }
+
+        template<typename U>
+        void printArr(const U& val)
+        {
+            std::cout << "UNHANDLE!!!" << std::endl;
+        }
+
+        template<typename U, std::size_t SIZE>
+        void printArr(const U(*val)[SIZE])
+        {
+            std::cout << "array:" << std::endl;
+            const auto start = std::begin(*val);
+            const auto last = std::end(*val);
+            printIter(start,last);
+        }
+
+        template<typename U, std::size_t SIZE>
+        void printArr(const std::array<U, SIZE>* val)
+        {
+            std::cout << "std::array:" << std::endl;
+            printIter(val->cbegin(),val->cend());
+        }
+
+        template<typename U>
+        void printArr(const std::vector<U>* val)
+        {
+            std::cout << "std::vector:" << std::endl;
+            printIter(val->cbegin(),val->cend());
+        }
+
+        template<typename U>
+        void printArr(const std::list<U>* val)
+        {
+            std::cout << "std::list:" << std::endl;
+            printIter(val->cbegin(),val->cend());
         }
 
         void write_basic_types(const Reflection::type& t)

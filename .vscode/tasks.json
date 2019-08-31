@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "debugDesktopBuild",
+            "label": "debugUbuntuBuild",
             "type": "shell",
             "command": "clear; bash ${workspaceFolder}/buildubuntu.sh Debug",
             "group": {
@@ -13,7 +13,7 @@
             }
         },
         {
-            "label": "releaseDesktopBuild",
+            "label": "releaseUbuntuBuild",
             "type": "shell",
             "command": "clear; bash ${workspaceFolder}/buildubuntu.sh Release"
         }

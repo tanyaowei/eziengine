@@ -76,7 +76,7 @@ public:
   EZIReflection(SubObject2, SubObject3)
 public:
   int a;
-  double b[3];
+  std::list<double> b;
 };
 
 template<typename T>
