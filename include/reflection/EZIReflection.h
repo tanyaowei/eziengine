@@ -20,6 +20,7 @@ RTTR_REGISTER_VISITOR(EZIEngine::Deserializer);
 
 #include <iostream>
 #include <typeinfo>
+#include <forward_list>
 
 namespace EZIEngine
 {
@@ -38,8 +39,8 @@ namespace EZIEngine
     class Serializer: public Reflection::visitor
     {
         public:
-        Serializer(void* obj)
-        :mObj(obj){}
+        Serializer(const void* object)
+        :mObject(object){}
     /////////////////////////////////////////////////////////////////////////////////////
 
         template<typename T, typename...Base_Classes>
@@ -91,42 +92,12 @@ namespace EZIEngine
             std::cout << info.property_item.get_name().to_string() << " - ";
             std::cout << info.property_item.get_type().get_name().to_string() << std::endl;
 
-            //std::cout << typeid(declaring_type_t).name() << std::endl;
-            //write_types(info.property_item.get_type());
-
             using declaring_type_t = typename property_info<T>::declaring_type;
             Reflection::type value_type = info.property_item.get_type();
-            const auto& accessor = reinterpret_cast<declaring_type_t*>(mObj)->*info.property_accessor;
+            const auto& accessor = reinterpret_cast<const declaring_type_t*>(mObject)->*info.property_accessor;
 
-            if(value_type.is_pointer())
-            {
-                std::cout << "is_pointer" << std::endl;
-                //write_types(value_type.get_raw_type());
-            }
-            else if(value_type.is_wrapper())
-            {      
-              std::cout << "is_wrapper" << std::endl;
-                //write_types(value_type.get_wrapped_type());
-            }
-            else if (value_type.is_arithmetic() || value_type.is_enumeration()
-                || value_type == Reflection::type::get<std::string>() )
-            {
-                write_basic_types(value_type); 
-            }
-            else if(value_type.is_sequential_container())
-            {
-                printArr(&accessor);
-            }
-            else if(value_type.is_associative_container())
-            {
-                std::cout << "is_associative_container" << std::endl;
-            }
-            else // object
-            {
-                std::cout << "is_object" << std::endl;
-            }
-
-        }
+            write_types(value_type,accessor);
+        }  
 
         template<typename T>
         void visit_getter_setter_property(const property_getter_setter_info<T>& info)
@@ -135,6 +106,12 @@ namespace EZIEngine
             std::cout << std::string("get_") + info.property_item.get_name().to_string() << " - ";
             std::cout << std::string("set_") + info.property_item.get_name().to_string() << " - ";
             std::cout << info.property_item.get_type().get_name().to_string() << std::endl;
+
+            using declaring_type_t = typename property_getter_setter_info<T>::declaring_type;
+            Reflection::type value_type = info.property_item.get_type();
+            const auto& getter = (reinterpret_cast<const declaring_type_t*>(mObject)->*info.property_getter)();
+
+            write_types(value_type,getter);
         }
 
         template<typename T>
@@ -154,53 +131,133 @@ private:
         }
 
         template<typename U>
-        void printIter(const U start, const U last)
+        void write_pointer_types(const Reflection::type& value_type, const U& value)
         {
-            for(auto it = start; it != last; ++it)
+            std::cout << "UNHANDLE!!! write_pointer: " << typeid(U).name() << std::endl;
+        }
+
+        template<typename U>
+        void write_pointer_types(const Reflection::type& value_type,U* value)
+        {
+            std::cout << "pointer: " << typeid(U).name() << std::endl;
+
+            if(value != nullptr)
             {
-                std::cout << *it << std::endl;
+                write_types(value_type.get_raw_type(), *value);
             }
         }
 
         template<typename U>
-        void printArr(const U& val)
+        void write_pointer_types(const Reflection::type& value_type,const U* value)
         {
-            std::cout << "UNHANDLE!!!" << std::endl;
+            std::cout << "pointer: " << typeid(U).name() << std::endl;
+
+            if(value != nullptr)
+            {
+                write_types(value_type.get_raw_type(), *value);
+            }
+        }
+
+        template<typename U>
+        void write_wrapper_types(const Reflection::type& value_type,const U& value)
+        {
+            std::cout << "UNHANDLE!!! write_wrapper: " << typeid(U).name() << std::endl;
+        }
+
+        template<typename U>
+        void write_wrapper_types(const Reflection::type& value_type,std::shared_ptr<U>& value)
+        {
+            std::cout << "std::shared_ptr: " << typeid(U).name() << std::endl;
+            write_types(value_type.get_wrapped_type().get_raw_type(), *value);
+        }
+
+        template<typename U>
+        void write_wrapper_types(const Reflection::type& value_type,const std::shared_ptr<U>& value)
+        {
+            std::cout << "std::shared_ptr: " << typeid(U).name() << std::endl;
+            write_types(value_type.get_wrapped_type().get_raw_type(), *value);
+        }
+
+        template<typename U>
+        void write_sequential_range(U start, U last)
+        {
+            for(auto it = start; it != last; ++it)
+            {
+                Reflection::type value_type = Reflection::instance(*it).get_type();
+                write_types(value_type, *it);
+            }
+        }
+
+        template<typename U>
+        void write_sequential_container(const U& value)
+        {
+            std::cout << "UNHANDLE!!! write_sequential_container" << std::endl;
         }
 
         template<typename U, std::size_t SIZE>
-        void printArr(const U(*val)[SIZE])
+        void write_sequential_container(U(*value)[SIZE])
         {
             std::cout << "array:" << std::endl;
-            const auto start = std::begin(*val);
-            const auto last = std::end(*val);
-            printIter(start,last);
+            auto start = std::begin(*value);
+            auto last = std::end(*value);
+            write_sequential_range(start,last);
         }
 
         template<typename U, std::size_t SIZE>
-        void printArr(const std::array<U, SIZE>* val)
+        void write_sequential_container(const std::array<U, SIZE>* value)
         {
             std::cout << "std::array:" << std::endl;
-            printIter(val->cbegin(),val->cend());
+            write_sequential_range(value->cbegin(),value->cend());
         }
 
         template<typename U>
-        void printArr(const std::vector<U>* val)
+        void write_sequential_container(const std::vector<U>* value)
         {
             std::cout << "std::vector:" << std::endl;
-            printIter(val->cbegin(),val->cend());
+            write_sequential_range(value->cbegin(),value->cend());
         }
 
         template<typename U>
-        void printArr(const std::list<U>* val)
+        void write_sequential_container(const std::list<U>* value)
         {
             std::cout << "std::list:" << std::endl;
-            printIter(val->cbegin(),val->cend());
+            write_sequential_range(value->cbegin(),value->cend());
         }
 
-        void write_basic_types(const Reflection::type& t)
+        template<typename U>
+        void write_sequential_container(const std::forward_list<U>* value)
         {
-            if (t.is_arithmetic())
+            std::cout << "std::forward_list:" << std::endl;
+            write_sequential_range(value->cbegin(),value->cend());
+        }
+
+        template<typename U>
+        void write_sequential_container(const std::deque<U>* value)
+        {
+            std::cout << "std::deque:" << std::endl;
+            print_iterator_range(value->cbegin(),value->cend());
+        }
+
+        template<typename U>
+        void write_arithmetic_types(const U& value)
+        {
+            std::cout << "UNHANDLE!!! write_arithmetic_types" << std::endl;
+        }
+
+        void write_arithmetic_types(const int& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const double& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        template<typename U>
+        void write_basic_types(const Reflection::type& value_type,U& value)
+        {
+            if (value_type.is_arithmetic())
             {
                 #if 0
                 if (t == Reflection::type::get<bool>())
@@ -229,9 +286,10 @@ private:
                     data.setValue(var.to_double());
                     #else
                     std::cout << "is_arithmetic" << std::endl;
+                    write_arithmetic_types(value);
                     #endif
             }
-            else if (t.is_enumeration())
+            else if (value_type.is_enumeration())
             {
                 #if 0
                 bool ok = false;
@@ -246,35 +304,40 @@ private:
                 }
                 #else
                 std::cout << "is_enumeration" << std::endl;
+                std::cout << typeid(value).name() << std::endl;
+                std::cout << value_type.get_enumeration().value_to_name(value).to_string() << std::endl;
                 #endif
             }
-            else if (t == Reflection::type::get<std::string>())
+            else if (value_type == Reflection::type::get<std::string>())
             {
                 //data.setValue(var.to_string());
                 std::cout << "is_string" << std::endl;
+                //std::cout << value << std::endl;
             }
         }
 
-        void write_types(const Reflection::type&value_type)
+        template<typename U>
+        void write_types(const Reflection::type& value_type, const U& value)
         {
             if(value_type.is_pointer())
             {
                 std::cout << "is_pointer" << std::endl;
-                //write_types(value_type.get_raw_type());
+                write_pointer_types(value_type, value);
             }
             else if(value_type.is_wrapper())
-            {      
-              std::cout << "is_wrapper" << std::endl;
-                //write_types(value_type.get_wrapped_type());
+            {
+                std::cout << "is_wrapper" << std::endl;
+                write_wrapper_types(value_type, value);
             }
-            else if (value_type.is_arithmetic() || value_type.is_enumeration()
+            else if (  value_type.is_arithmetic() || value_type.is_enumeration()
                 || value_type == Reflection::type::get<std::string>() )
             {
-                write_basic_types(value_type); 
+                write_basic_types(value_type, value); 
             }
             else if(value_type.is_sequential_container())
             {
                 std::cout << "is_sequential_container" << std::endl;
+                write_sequential_container(&value);
             }
             else if(value_type.is_associative_container())
             {
@@ -283,13 +346,15 @@ private:
             else // object
             {
                 std::cout << "is_object" << std::endl;
+                Serializer serializer(&value);
+                serializer.visit(Reflection::instance(value).get_derived_type());
             }
         }
 
 private:
         EZIReflection(visitor)
 
-        void* mObj;
+        const void* mObject;
     };
 
     class Deserializer: public Reflection::visitor

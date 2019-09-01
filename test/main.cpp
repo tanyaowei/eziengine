@@ -28,7 +28,13 @@ private:
 class SubObject
 {
 public:
-  SubObject() :s(3.1417), e(5), g(ORANGE){}
+  SubObject() :s(3.1417), e(5), g(ORANGE)
+  {
+    for(auto& elem: e)
+    {
+      elem.reset(new SubObject3());
+    }
+  }
   virtual ~SubObject(){}
 
   EZIReflection()
@@ -67,13 +73,13 @@ private:
   double f;
 };
 
-class Object :public SubObject2, public SubObject3
+class Object :public SubObject2
 {
 public:
   Object() :a(7), b{1,2,3}{}
   ~Object(){ }
   
-  EZIReflection(SubObject2, SubObject3)
+  EZIReflection(SubObject2)
 public:
   int a;
   std::list<double> b;
@@ -103,7 +109,7 @@ T* conv_val_type(T value, bool&ok)
 
 EZIReflectionRegistration
 {
-  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<bool>);
+  /*EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<bool>);
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<char>);
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<int8_t>);
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<int16_t>);
@@ -114,7 +120,7 @@ EZIReflectionRegistration
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<uint32_t>);
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<uint64_t>);
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<float>);
-  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<double>);
+  EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<double>);*/
 
   /*EZIEngine::Reflection::type::register_converter_func(conv_val_type<bool>);
   EZIEngine::Reflection::type::register_converter_func(conv_val_type<char>);
