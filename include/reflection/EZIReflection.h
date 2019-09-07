@@ -1,6 +1,7 @@
 #ifndef _EZI_REFLECTION_H_
 #define _EZI_REFLECTION_H_
 
+//#include <math/EZIType.h>
 #include <rttr/visitor.h>
 #include <iterator>
 
@@ -21,6 +22,7 @@ RTTR_REGISTER_VISITOR(EZIEngine::Deserializer);
 #include <iostream>
 #include <typeinfo>
 #include <forward_list>
+#include <stack>
 
 namespace EZIEngine
 {
@@ -39,20 +41,51 @@ namespace EZIEngine
     class Serializer: public Reflection::visitor
     {
         public:
-        Serializer(const void* object)
-        :mObject(object){}
+        Serializer(const void* objptr)
+        :mObjPtr(objptr){}
+
+        template<typename Derived>
+        void iterate_base_classes()
+        {
+        }
+
+        template<typename Derived, typename Base_Class, typename...Base_Classes>
+        void iterate_base_classes()
+        {
+            iterate_base_classes<Derived, Base_Classes...>();
+            if(typeid(Base_Class).name() == mTypeStack.back().mName)
+            {
+                mTypeStack.pop_back();
+            }
+        }
+
     /////////////////////////////////////////////////////////////////////////////////////
 
         template<typename T, typename...Base_Classes>
         void visit_type_begin(const type_info<T>& info)
         {
-            std::cout << "visit_type_begin" << std::endl;
+            std::cout << "{" << std::endl;
+            using declaring_type_t = typename type_info<T>::declaring_type;
+            iterate_base_classes<declaring_type_t, Base_Classes...>();
+            mPtrOffset = 0;
+            if(mTypeStack.empty() == false)
+            {
+                for(const auto& elem: mTypeStack)
+                {
+                    mPtrOffset+= elem.mSize;
+                }
+            }
+            std::cout << "mPtrOffset: " << mPtrOffset << std::endl;
+            ClassEntry temp;
+            temp.mName = typeid(declaring_type_t).name();
+            temp.mSize = sizeof(declaring_type_t);
+            mTypeStack.push_back(temp);
         }
 
         template<typename T, typename...Base_Classes>
         void visit_type_end(const type_info<T>& info)
         {
-            std::cout << "visit_type_end" << std::endl;
+            std::cout << "}" << std::endl;
         }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +127,8 @@ namespace EZIEngine
 
             using declaring_type_t = typename property_info<T>::declaring_type;
             Reflection::type value_type = info.property_item.get_type();
-            const auto& accessor = reinterpret_cast<const declaring_type_t*>(mObject)->*info.property_accessor;
+            const char* charptr = reinterpret_cast<const char*>(mObjPtr);
+            const auto& accessor = reinterpret_cast<const declaring_type_t*>( charptr + mPtrOffset)->*info.property_accessor;
 
             write_types(value_type,accessor);
         }  
@@ -109,7 +143,8 @@ namespace EZIEngine
 
             using declaring_type_t = typename property_getter_setter_info<T>::declaring_type;
             Reflection::type value_type = info.property_item.get_type();
-            const auto& getter = (reinterpret_cast<const declaring_type_t*>(mObject)->*info.property_getter)();
+            const char* charptr = reinterpret_cast<const char*>(mObjPtr);
+            const auto& getter = (reinterpret_cast<const declaring_type_t*>(charptr + mPtrOffset)->*info.property_getter)();
 
             write_types(value_type,getter);
         }
@@ -354,7 +389,16 @@ private:
 private:
         EZIReflection(visitor)
 
-        const void* mObject;
+        struct ClassEntry
+        {
+            std::string mName;
+            size_t mSize = 0;
+        };
+         
+        std::vector<ClassEntry> mTypeStack;
+
+        size_t mPtrOffset = 0;
+        const void* mObjPtr = nullptr;
     };
 
     class Deserializer: public Reflection::visitor

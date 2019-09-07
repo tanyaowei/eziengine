@@ -25,10 +25,36 @@ private:
 
 };
 
+class SubObject4
+{
+  public:
+  SubObject4() :mPtr(new Fruits(Fruits::ORANGE)){}
+  ~SubObject4(){}
+
+  std::shared_ptr<Fruits> mPtr;
+
+private:
+  EZIReflection()
+
+};
+
+class SubObject5: public SubObject3, public SubObject4
+{
+  public:
+  SubObject5() :mPtr(new Fruits(Fruits::GRAPES)){}
+  ~SubObject5(){}
+
+  std::shared_ptr<Fruits> mPtr;
+
+private:
+  EZIReflection(SubObject3,SubObject4)
+
+};
+
 class SubObject
 {
 public:
-  SubObject() :s(3.1417), e(5), g(ORANGE)
+  SubObject() :s(3.1417), e(2), g(ORANGE)
   {
     for(auto& elem: e)
     {
@@ -73,13 +99,13 @@ private:
   double f;
 };
 
-class Object :public SubObject2
+class Object :public SubObject2, public SubObject5
 {
 public:
   Object() :a(7), b{1,2,3}{}
   ~Object(){ }
   
-  EZIReflection(SubObject2)
+  EZIReflection(SubObject2, SubObject5)
 public:
   int a;
   std::list<double> b;
@@ -156,6 +182,14 @@ EZIReflectionRegistration
   EZIEngine::Reflection::registration::class_<SubObject3>("SubObject3")
   .constructor<>()
   .property("SubObject3::mPtr", &SubObject3::mPtr);
+
+  EZIEngine::Reflection::registration::class_<SubObject4>("SubObject4")
+  .constructor<>()
+  .property("SubObject4::mPtr", &SubObject4::mPtr);
+
+    EZIEngine::Reflection::registration::class_<SubObject5>("SubObject5")
+  .constructor<>()
+  .property("SubObject5::mPtr", &SubObject5::mPtr);
 
    EZIEngine::Reflection::registration::class_<Object>("Object")
   .constructor<>()
