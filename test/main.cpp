@@ -169,13 +169,13 @@ EZIReflectionRegistration
   );
   EZIEngine::Reflection::type::register_converter_func(conv_ptr_type<Fruits>);
 
-   EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
+  EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
   .constructor<>()
   .property("SubObject::s", &SubObject::s)
   .property("SubObject::e", &SubObject::getE, &SubObject::setE)
   .property("SubObject::g", &SubObject::g);
 
-   EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
+  EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
   .constructor<>()
   .property("SubObject2::f", &SubObject2::f);
 
@@ -187,11 +187,11 @@ EZIReflectionRegistration
   .constructor<>()
   .property("SubObject4::mPtr", &SubObject4::mPtr);
 
-    EZIEngine::Reflection::registration::class_<SubObject5>("SubObject5")
+  EZIEngine::Reflection::registration::class_<SubObject5>("SubObject5")
   .constructor<>()
   .property("SubObject5::mPtr", &SubObject5::mPtr);
 
-   EZIEngine::Reflection::registration::class_<Object>("Object")
+  EZIEngine::Reflection::registration::class_<Object>("Object")
   .constructor<>()
   .property("Object::a", &Object::a)
   .property("Object::b", &Object::b);

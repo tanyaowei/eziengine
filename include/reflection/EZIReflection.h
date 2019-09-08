@@ -53,10 +53,16 @@ namespace EZIEngine
         void iterate_base_classes()
         {
             iterate_base_classes<Derived, Base_Classes...>();
-            if(typeid(Base_Class).name() == mTypeStack.back().mName)
+
+            auto it = mTypeStack.begin();
+            for(;it != mTypeStack.end(); ++it)
             {
-                mTypeStack.pop_back();
+                if(it->mName == typeid(Base_Class).name())
+                {
+                    break;
+                }
             }
+            mTypeStack.erase(it,mTypeStack.end());
         }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -214,11 +220,10 @@ private:
         }
 
         template<typename U>
-        void write_sequential_range(U start, U last)
+        void write_sequential_range(const Reflection::type& value_type,U start, U last)
         {
             for(auto it = start; it != last; ++it)
             {
-                Reflection::type value_type = Reflection::instance(*it).get_type();
                 write_types(value_type, *it);
             }
         }
@@ -233,44 +238,97 @@ private:
         void write_sequential_container(U(*value)[SIZE])
         {
             std::cout << "array:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
             auto start = std::begin(*value);
             auto last = std::end(*value);
-            write_sequential_range(start,last);
+            write_sequential_range(value_type, start,last);
         }
 
         template<typename U, std::size_t SIZE>
         void write_sequential_container(const std::array<U, SIZE>* value)
         {
             std::cout << "std::array:" << std::endl;
-            write_sequential_range(value->cbegin(),value->cend());
+            Reflection::type value_type = Reflection::type::get<U>();
+            write_sequential_range(value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_sequential_container(const std::vector<U>* value)
         {
             std::cout << "std::vector:" << std::endl;
-            write_sequential_range(value->cbegin(),value->cend());
+            Reflection::type value_type = Reflection::type::get<U>();
+            write_sequential_range(value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_sequential_container(const std::list<U>* value)
         {
             std::cout << "std::list:" << std::endl;
-            write_sequential_range(value->cbegin(),value->cend());
+            Reflection::type value_type = Reflection::type::get<U>();
+            write_sequential_range(value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_sequential_container(const std::forward_list<U>* value)
         {
             std::cout << "std::forward_list:" << std::endl;
-            write_sequential_range(value->cbegin(),value->cend());
+            Reflection::type value_type = Reflection::type::get<U>();
+            write_sequential_range(value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_sequential_container(const std::deque<U>* value)
         {
             std::cout << "std::deque:" << std::endl;
-            print_iterator_range(value->cbegin(),value->cend());
+            Reflection::type value_type = Reflection::type::get<U>();
+            print_iterator_range(value_type, value->cbegin(),value->cend());
+        }
+
+       template<typename U>
+        void write_associative_container(const U& value)
+        {
+            std::cout << "UNHANDLE!!! write_associative_container" << std::endl;
+        }
+
+        template<typename U,typename V>
+        void write_associative_container(const std::map<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            if (  key_type.is_arithmetic() || key_type.is_enumeration()
+                || key_type == Reflection::type::get<std::string>() )
+            {
+                for(const auto& elem: *value)
+                {
+                    std::cout << "key: ";
+                    write_basic_types(key_type, elem->first);
+                    std::cout << "value: ";
+                    write_types(value_type,elem->second);
+                }
+            }
+            else
+            {
+                std::cout << "write_associative_container, UNSUPPORT key type!!!" << std::endl;
+            }
+        }
+
+        template<typename U,typename V>
+        void write_associative_container(const std::multimap<U,V>* value)
+        {
+
+        }
+
+        template<typename U>
+        void write_associative_container(const std::set<U>* value)
+        {
+
+        }
+
+        template<typename U>
+        void write_associative_container(const std::multiset<U>* value)
+        {
+
         }
 
         template<typename U>
@@ -377,6 +435,7 @@ private:
             else if(value_type.is_associative_container())
             {
                 std::cout << "is_associative_container" << std::endl;
+                write_associative_container(&value);
             }
             else // object
             {
