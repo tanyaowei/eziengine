@@ -54,37 +54,18 @@ private:
 class SubObject
 {
 public:
-  SubObject() :s(3.1417), e(2), g(ORANGE)
+  SubObject() :s("runescape!"), g(ORANGE)
   {
-    for(auto& elem: e)
-    {
-      elem.reset(new SubObject3());
-    }
+    e.emplace(Fruits::GRAPES,new SubObject3());
+    e.emplace(Fruits::APPLE,new SubObject5());    
   }
   virtual ~SubObject(){}
 
   EZIReflection()
 
-  void setE(std::vector<SubObject3*> val)
-  { 
-    e.clear();
-    for(auto& elem: val)
-    {
-      e.emplace_back(elem);
-    }
-  }
-  std::vector<SubObject3*> getE() const 
-  { 
-    std::vector<SubObject3*> result;
-    for(auto& elem: e)
-    {
-      result.push_back(elem.get());
-    }
-    return result; 
-  }
 public:
-  double s;
-  std::vector<std::unique_ptr<SubObject3>> e;
+  std::string s;
+  std::map<Fruits,std::shared_ptr<SubObject3>> e;
   Fruits g;
 };
 
@@ -172,7 +153,7 @@ EZIReflectionRegistration
   EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
   .constructor<>()
   .property("SubObject::s", &SubObject::s)
-  .property("SubObject::e", &SubObject::getE, &SubObject::setE)
+  .property("SubObject::e", &SubObject::e)
   .property("SubObject::g", &SubObject::g);
 
   EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")

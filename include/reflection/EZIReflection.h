@@ -284,6 +284,47 @@ private:
             print_iterator_range(value_type, value->cbegin(),value->cend());
         }
 
+        template<typename U>
+        void write_associative_keyvalue_range(const Reflection::type& key_type
+                                            , const Reflection::type& value_type
+                                            ,U start, U last)
+        {
+            if (  key_type.is_arithmetic() || key_type.is_enumeration()
+                || key_type == Reflection::type::get<std::string>() )
+            {
+                for(auto it = start; it != last; ++it)
+                {
+                    std::cout << "key: ";
+                    write_basic_types(key_type, it->first);
+                    std::cout << "value: ";
+                    write_types(value_type,it->second);
+                }
+            }
+            else
+            {
+                std::cout << "write_associative_keyvalue_range, UNSUPPORT key type!!!" << std::endl;
+            }
+        }
+
+        template<typename U>
+        void write_associative_key_range(const Reflection::type& key_type
+                                            ,U start, U last)
+        {
+            if (  key_type.is_arithmetic() || key_type.is_enumeration()
+                || key_type == Reflection::type::get<std::string>() )
+            {
+                for(auto it = start; it != last; ++it)
+                {
+                    std::cout << "key: ";
+                    write_basic_types(key_type, *it);
+                }
+            }
+            else
+            {
+                std::cout << "write_associative_keyvalue_range, UNSUPPORT key type!!!" << std::endl;
+            }
+        }
+
        template<typename U>
         void write_associative_container(const U& value)
         {
@@ -296,39 +337,62 @@ private:
             Reflection::type key_type = Reflection::type::get<U>();
             Reflection::type value_type = Reflection::type::get<V>();
 
-            if (  key_type.is_arithmetic() || key_type.is_enumeration()
-                || key_type == Reflection::type::get<std::string>() )
-            {
-                for(const auto& elem: *value)
-                {
-                    std::cout << "key: ";
-                    write_basic_types(key_type, elem->first);
-                    std::cout << "value: ";
-                    write_types(value_type,elem->second);
-                }
-            }
-            else
-            {
-                std::cout << "write_associative_container, UNSUPPORT key type!!!" << std::endl;
-            }
+            write_associative_keyvalue_range(key_type,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U,typename V>
         void write_associative_container(const std::multimap<U,V>* value)
         {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
 
+            write_associative_keyvalue_range(key_type,value_type, value->cbegin(),value->cend());
+        }
+
+        template<typename U,typename V>
+        void write_associative_container(const std::unordered_map<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            write_associative_keyvalue_range(key_type,value_type, value->cbegin(),value->cend());
+        }
+
+        template<typename U,typename V>
+        void write_associative_container(const std::unordered_multimap<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            write_associative_keyvalue_range(key_type,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_associative_container(const std::set<U>* value)
         {
-
+            Reflection::type key_type = Reflection::type::get<U>();
+            write_associative_key_range(key_type,value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_associative_container(const std::multiset<U>* value)
         {
+            Reflection::type key_type = Reflection::type::get<U>();
+            write_associative_key_range(key_type,value->cbegin(),value->cend());
+        }
 
+        template<typename U>
+        void write_associative_container(const std::unordered_set<U>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            write_associative_key_range(key_type,value->cbegin(),value->cend());
+        }
+
+        template<typename U>
+        void write_associative_container(const std::unordered_multiset<U>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            write_associative_key_range(key_type,value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -337,7 +401,57 @@ private:
             std::cout << "UNHANDLE!!! write_arithmetic_types" << std::endl;
         }
 
-        void write_arithmetic_types(const int& value)
+        void write_arithmetic_types(const bool& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const char& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const int8_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const int16_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const int32_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const int64_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const uint8_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const uint16_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const uint32_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const uint64_t& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        void write_arithmetic_types(const float& value)
         {
             std::cout << value << std::endl;
         }
@@ -348,64 +462,36 @@ private:
         }
 
         template<typename U>
+        void write_string_types(const U& value)
+        {
+            std::cout << "UNHANDLE!!! write_string_types" << std::endl;
+        }
+
+        void write_string_types(const std::string& value)
+        {
+            std::cout << value << std::endl;
+        }
+
+        template<typename U>
         void write_basic_types(const Reflection::type& value_type,U& value)
         {
             if (value_type.is_arithmetic())
             {
-                #if 0
-                if (t == Reflection::type::get<bool>())
-                    data.setValue(var.to_bool());
-                else if (t == Reflection::type::get<char>())
-                    data.setValue(var.to_int8());
-                else if (t == Reflection::type::get<int8_t>())
-                    data.setValue(var.to_int8());
-                else if (t == Reflection::type::get<int16_t>())
-                    data.setValue(var.to_int16());
-                else if (t == Reflection::type::get<int32_t>())
-                    data.setValue(var.to_int32());
-                else if (t == Reflection::type::get<int64_t>())
-                    data.setValue(var.to_int64());
-                else if (t == Reflection::type::get<uint8_t>())
-                    data.setValue(var.to_uint8());
-                else if (t == Reflection::type::get<uint16_t>())
-                    data.setValue(var.to_uint16());
-                else if (t == Reflection::type::get<uint32_t>())
-                    data.setValue(var.to_uint32());
-                else if (t == Reflection::type::get<uint64_t>())
-                    data.setValue(var.to_uint64());
-                else if (t == Reflection::type::get<float>())
-                    data.setValue(var.to_float());
-                else if (t == Reflection::type::get<double>())
-                    data.setValue(var.to_double());
-                    #else
-                    std::cout << "is_arithmetic" << std::endl;
-                    write_arithmetic_types(value);
-                    #endif
+                std::cout << "is_arithmetic" << std::endl;
+                write_arithmetic_types(value);
             }
             else if (value_type.is_enumeration())
             {
-                #if 0
-                bool ok = false;
-                auto enumstr = var.to_string(&ok);
-                if (ok)
-                {
-                data.setValue(enumstr);
-                }
-                else
-                {
-                data.setValue(std::string());
-                }
-                #else
+
                 std::cout << "is_enumeration" << std::endl;
-                std::cout << typeid(value).name() << std::endl;
-                std::cout << value_type.get_enumeration().value_to_name(value).to_string() << std::endl;
-                #endif
+                Reflection::enumeration enum_type = value_type.get_enumeration();
+                std::string enum_string = enum_type.value_to_name(value).to_string();
+                write_string_types(enum_string);
             }
             else if (value_type == Reflection::type::get<std::string>())
             {
-                //data.setValue(var.to_string());
                 std::cout << "is_string" << std::endl;
-                //std::cout << value << std::endl;
+                write_string_types(value);
             }
         }
 
@@ -423,7 +509,7 @@ private:
                 write_wrapper_types(value_type, value);
             }
             else if (  value_type.is_arithmetic() || value_type.is_enumeration()
-                || value_type == Reflection::type::get<std::string>() )
+                || value_type == Reflection::type::get<std::string>())
             {
                 write_basic_types(value_type, value); 
             }
