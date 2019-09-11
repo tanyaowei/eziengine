@@ -1,9 +1,7 @@
 #ifndef _EZI_REFLECTION_H_
 #define _EZI_REFLECTION_H_
 
-//#include <math/EZIType.h>
 #include <rttr/visitor.h>
-#include <iterator>
 
 namespace EZIEngine
 {
@@ -19,6 +17,10 @@ RTTR_REGISTER_VISITOR(EZIEngine::Deserializer);
 #include <rttr/enumeration.h>
 #include <rttr/type>
 
+#include <ArduinoJson.h>
+
+//#include <math/EZIType.h>
+#include <iterator>
 #include <iostream>
 #include <typeinfo>
 #include <forward_list>

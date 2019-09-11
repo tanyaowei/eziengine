@@ -22,6 +22,7 @@ target_link_libraries(eziengine glm_static RTTR::Core_Lib)
 
 target_include_directories(eziengine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/dependencies/glm)
 target_include_directories(eziengine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/dependencies/rttr/src)
+target_include_directories(eziengine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/dependencies/ArduinoJson/src)
 
 target_include_directories(eziengine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
