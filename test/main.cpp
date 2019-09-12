@@ -83,13 +83,13 @@ private:
 class Object :public SubObject2, public SubObject5
 {
 public:
-  Object() :a(7), b{1,2,3}{}
+  Object() :a(7), b{SubObject4(),SubObject4()}{}
   ~Object(){ }
   
   EZIReflection(SubObject2, SubObject5)
 public:
   int a;
-  std::list<double> b;
+  std::list<SubObject4> b;
 };
 
 template<typename T>
@@ -209,8 +209,12 @@ int main()
   //print(temp);
 
   std::cout << "EZIEngine::Serializer" << std::endl;
-  EZIEngine::Serializer serializer(obj);
+  DynamicJsonDocument doc(1 << 20);
+  JsonObject json_obj = doc.to<JsonObject>();
+  EZIEngine::JsonSerializer serializer(json_obj,obj);
   serializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
-
+  std::string output;
+  serializeJsonPretty(doc,output);
+  std::cout << output << std::endl;
   return 0;
 }
