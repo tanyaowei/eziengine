@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <fstream>
 
 #include "serialization/EZIDataStream.h"
 #include "reflection/EZIReflection.h"
@@ -72,12 +73,12 @@ public:
 class SubObject2: public SubObject
 {
 public:
-  SubObject2() :f(1.2345){}
+  SubObject2() :f{1.2345,1,2}{}
   virtual ~SubObject2(){}
 
 private:
   EZIReflection(SubObject)
-  double f;
+  double f[3];
 };
 
 class Object :public SubObject2, public SubObject5
@@ -211,10 +212,15 @@ int main()
   std::cout << "EZIEngine::Serializer" << std::endl;
   DynamicJsonDocument doc(1 << 20);
   JsonObject json_obj = doc.to<JsonObject>();
-  EZIEngine::JsonSerializer serializer(json_obj,obj);
+  EZIEngine::JsonDeserializer serializer(json_obj,obj);
   serializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
   std::string output;
   serializeJsonPretty(doc,output);
-  std::cout << output << std::endl;
+  std::ofstream outfile("test.json");
+  if(outfile.is_open())
+  {
+    outfile << output;
+  }
+  outfile.close();
   return 0;
 }

@@ -6,11 +6,11 @@
 namespace EZIEngine
 {
     class JsonSerializer;
-    class Deserializer;
+    class JsonDeserializer;
 }
 
 RTTR_REGISTER_VISITOR(EZIEngine::JsonSerializer);
-RTTR_REGISTER_VISITOR(EZIEngine::Deserializer);
+RTTR_REGISTER_VISITOR(EZIEngine::JsonDeserializer);
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
@@ -78,8 +78,8 @@ namespace EZIEngine
             ClassEntry temp;
             temp.mName = get_type_name<declaring_type_t>();
             temp.mSize = sizeof(declaring_type_t);
-            JsonArray array = temp.mJsonDoc.createNestedArray("BASE_CLASSES");
             temp.mJsonDoc["CLASS_TYPE_NAME"] = get_type_name<declaring_type_t>(); 
+            JsonArray array = temp.mJsonDoc.createNestedArray("BASE_CLASSES");
             temp.mJsonDoc.createNestedObject("PROPERTIES");
             iterate_base_classes<declaring_type_t, Base_Classes...>(array);
             mPtrOffset = 0;
@@ -174,6 +174,17 @@ namespace EZIEngine
         {
             std::cout << "visit_readonly_property: ";
             std::cout << info.property_item.get_name().to_string() << std::endl;
+
+            using declaring_type_t = typename property_info<T>::declaring_type;
+            Reflection::type value_type = info.property_item.get_type();
+            const char* charptr = reinterpret_cast<const char*>(mObjPtr);
+            const auto& accessor = reinterpret_cast<const declaring_type_t*>( charptr + mPtrOffset)->*info.property_accessor;
+
+            std::string var_name = info.property_item.get_name().to_string();
+
+            JsonObject obj = mJsonObj["PROPERTIES"].as<JsonObject>();
+
+            write_types(obj[var_name].to<JsonVariant>() ,value_type,accessor);
         }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -188,7 +199,7 @@ private:
         template<typename U>
         void write_pointer_types(JsonVariant var, const Reflection::type& value_type, const U& value)
         {
-            std::cout << "UNHANDLE!!! write_pointer: " << typeid(U).name() << std::endl;
+            std::cout << "UNHANDLE!!! write_pointer_types: " << typeid(U).name() << std::endl;
         }
 
         template<typename U>
@@ -247,7 +258,7 @@ private:
         }
 
         template<typename U, std::size_t SIZE>
-        void write_sequential_container(JsonVariant var, U(*value)[SIZE])
+        void write_sequential_container(JsonVariant var, const U(*value)[SIZE])
         {
             std::cout << "array:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
@@ -293,7 +304,7 @@ private:
         {
             std::cout << "std::deque:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            print_iterator_range(var,value_type, value->cbegin(),value->cend());
+            write_sequential_range(var,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -502,7 +513,7 @@ private:
         }
 
         template<typename U>
-        void write_basic_types(JsonVariant var, const Reflection::type& value_type,U& value)
+        void write_basic_types(JsonVariant var, const Reflection::type& value_type, const U& value)
         {
             if (value_type.is_arithmetic())
             {
@@ -579,22 +590,65 @@ private:
         const void* mObjPtr = nullptr;
     };
 
-    class Deserializer: public Reflection::visitor
+    class JsonDeserializer: public Reflection::visitor
     {
         public:
+        JsonDeserializer(JsonObject jsonowner,void* objptr)
+        :mJsonOwner(jsonowner),mObjPtr(objptr){}
 
+        template<typename Derived>
+        void iterate_base_classes(JsonArray array)
+        {
+        }
+
+        template<typename Derived, typename Base_Class, typename...Base_Classes>
+        void iterate_base_classes(JsonArray array)
+        {
+            iterate_base_classes<Derived, Base_Classes...>(array);
+
+            auto it = mTypeStack.begin();
+            for(;it != mTypeStack.end(); ++it)
+            {
+                if(it->mName == get_type_name<Base_Class>())
+                {
+                    array.add(it->mJsonDoc.as<JsonObject>());
+                    break;
+                }
+            }
+            mTypeStack.erase(it);
+        }
     /////////////////////////////////////////////////////////////////////////////////////
 
         template<typename T, typename...Base_Classes>
         void visit_type_begin(const type_info<T>& info)
         {
             std::cout << "visit_type_begin" << std::endl;
+            using declaring_type_t = typename type_info<T>::declaring_type;
+
+            ClassEntry temp;
+            temp.mName = get_type_name<declaring_type_t>();
+            temp.mSize = sizeof(declaring_type_t);
+            temp.mJsonDoc["CLASS_TYPE_NAME"] = get_type_name<declaring_type_t>(); 
+            JsonArray array = temp.mJsonDoc.createNestedArray("BASE_CLASSES");
+            temp.mJsonDoc.createNestedObject("PROPERTIES");
+            iterate_base_classes<declaring_type_t, Base_Classes...>(array);
+            mPtrOffset = 0;
+            if(mTypeStack.empty() == false)
+            {
+                for(const auto& elem: mTypeStack)
+                {
+                    mPtrOffset+= elem.mSize;
+                }
+            }
+            mTypeStack.push_back(temp);
+            mJsonObj = mTypeStack.back().mJsonDoc.as<JsonObject>();
         }
 
         template<typename T, typename...Base_Classes>
         void visit_type_end(const type_info<T>& info)
         {
             std::cout << "visit_type_end" << std::endl;
+            mJsonOwner.set(mJsonObj);
         }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -632,6 +686,17 @@ private:
         {
             std::cout << "visit_property: ";
             std::cout << info.property_item.get_name().to_string() << std::endl;
+
+            using declaring_type_t = typename property_info<T>::declaring_type;
+            Reflection::type value_type = info.property_item.get_type();
+            char* charptr = reinterpret_cast<char*>(mObjPtr);
+            auto& accessor = reinterpret_cast<declaring_type_t*>( charptr + mPtrOffset)->*info.property_accessor;
+
+            std::string var_name = info.property_item.get_name().to_string();
+
+            JsonObject obj = mJsonObj["PROPERTIES"].as<JsonObject>();
+
+            read_types(obj[var_name].to<JsonVariant>() ,value_type,accessor);
         }
 
         template<typename T>
@@ -658,7 +723,402 @@ private:
             return Reflection::type::template get<T>().get_name().to_string();
         }
 
+        template<typename U>
+        void read_pointer_types(JsonVariant var, const Reflection::type& value_type, const U& value)
+        {
+            std::cout << "UNHANDLE!!! read_pointer: " << typeid(U).name() << std::endl;
+        }
+
+        template<typename U>
+        void read_pointer_types(JsonVariant var, const Reflection::type& value_type, U*& value)
+        {
+            std::cout << "pointer: " << typeid(U).name() << std::endl;
+
+            if(value != nullptr)
+            {
+                delete value;
+                value = nullptr;
+            }
+
+            value = new U();
+
+            read_types(var, value_type.get_raw_type(), *value);
+        }
+
+        void read_pointer_types(JsonVariant var, const Reflection::type& value_type, char*& value)
+        {
+            if(value != nullptr)
+            {
+                read_string_types(var, value);
+            }
+        }
+
+        template<typename U>
+        void read_wrapper_types(JsonVariant var, const Reflection::type& value_type,const U& value)
+        {
+            std::cout << "UNHANDLE!!! read_wrapper: " << typeid(U).name() << std::endl;
+        }
+
+        template<typename U>
+        void read_wrapper_types(JsonVariant var, const Reflection::type& value_type, std::shared_ptr<U>& value)
+        {
+            std::cout << "std::shared_ptr: " << typeid(U).name() << std::endl;
+            value.reset(new U());
+            read_types(var,value_type.get_wrapped_type().get_raw_type(), *value);
+        }
+
+        template<typename U>
+        void read_sequential_range(JsonVariant var, const Reflection::type& value_type,U start, U last)
+        {
+            JsonArray array = var.to<JsonArray>();
+
+            size_t index = 0;
+
+            for(auto it = start; it != last; ++it)
+            {
+                array.add(0);
+
+                read_types(array[index],value_type, *it);
+
+                ++index;
+            }
+        }
+
+        template<typename U>
+        void read_sequential_container(JsonVariant var, const U& value)
+        {
+            std::cout << "UNHANDLE!!! read_sequential_container" << std::endl;
+        }
+
+        template<typename U, std::size_t SIZE>
+        void read_sequential_container(JsonVariant var, U(*value)[SIZE])
+        {
+            std::cout << "array:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
+            auto start = std::begin(*value);
+            auto last = std::end(*value);
+            read_sequential_range(var,value_type, start,last);
+        }
+
+        template<typename U, std::size_t SIZE>
+        void read_sequential_container(JsonVariant var, std::array<U, SIZE>* value)
+        {
+            std::cout << "std::array:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
+            read_sequential_range(var,value_type, value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_sequential_container(JsonVariant var, std::vector<U>* value)
+        {
+            std::cout << "std::vector:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
+            read_sequential_range(var,value_type, value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_sequential_container(JsonVariant var, std::list<U>* value)
+        {
+            std::cout << "std::list:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
+            read_sequential_range(var,value_type, value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_sequential_container(JsonVariant var, std::forward_list<U>* value)
+        {
+            std::cout << "std::forward_list:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
+            read_sequential_range(var,value_type, value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_sequential_container(JsonVariant var, std::deque<U>* value)
+        {
+            std::cout << "std::deque:" << std::endl;
+            Reflection::type value_type = Reflection::type::get<U>();
+            read_sequential_range(var,value_type, value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_associative_keyvalue_range(JsonVariant var
+                                            , const Reflection::type& key_type
+                                            , const Reflection::type& value_type
+                                            ,U start, U last)
+        {
+            if (  key_type.is_arithmetic() || key_type.is_enumeration()
+                || key_type == Reflection::type::get<std::string>() )
+            {
+                JsonArray array = var.to<JsonArray>();
+
+                for(auto it = start; it != last; ++it)
+                {
+                    JsonObject obj = array.createNestedObject();
+                    read_basic_types(obj["KEY"].to<JsonVariant>(),key_type, it->first);
+                    read_types(obj["VALUE"].to<JsonVariant>(),value_type,it->second);
+                }
+            }
+            else
+            {
+                std::cout << "read_associative_keyvalue_range, UNSUPPORT key type!!!" << std::endl;
+            }
+        }
+
+        template<typename U>
+        void read_associative_key_range(JsonVariant var, const Reflection::type& key_type
+                                            ,U start, U last)
+        {
+            if (  key_type.is_arithmetic() || key_type.is_enumeration()
+                || key_type == Reflection::type::get<std::string>() )
+            {
+                JsonArray array = var.to<JsonArray>();
+
+                for(auto it = start; it != last; ++it)
+                {
+                    JsonObject obj = array.createNestedObject();
+                    read_basic_types(obj["KEY"].to<JsonVariant>(),key_type, *it);
+                }
+            }
+            else
+            {
+                std::cout << "read_associative_key_range, UNSUPPORT key type!!!" << std::endl;
+            }
+        }
+
+       template<typename U>
+        void read_associative_container(JsonVariant var, const U& value)
+        {
+            std::cout << "UNHANDLE!!! read_associative_container" << std::endl;
+        }
+
+        template<typename U,typename V>
+        void read_associative_container(JsonVariant var, std::map<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            read_associative_keyvalue_range(var,key_type,value_type, value->begin(),value->end());
+        }
+
+        template<typename U,typename V>
+        void read_associative_container(JsonVariant var, std::multimap<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            read_associative_keyvalue_range(var,key_type,value_type, value->begin(),value->end());
+        }
+
+        template<typename U,typename V>
+        void read_associative_container(JsonVariant var, std::unordered_map<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            read_associative_keyvalue_range(var,key_type,value_type, value->begin(),value->end());
+        }
+
+        template<typename U,typename V>
+        void read_associative_container(JsonVariant var, std::unordered_multimap<U,V>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            Reflection::type value_type = Reflection::type::get<V>();
+
+            read_associative_keyvalue_range(var,key_type,value_type, value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_associative_container(JsonVariant var, std::set<U>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            read_associative_key_range(var,key_type,value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_associative_container(JsonVariant var, std::multiset<U>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            read_associative_key_range(var,key_type,value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_associative_container(JsonVariant var, std::unordered_set<U>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            read_associative_key_range(var,key_type,value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_associative_container(JsonVariant var, std::unordered_multiset<U>* value)
+        {
+            Reflection::type key_type = Reflection::type::get<U>();
+            read_associative_key_range(var,key_type,value->begin(),value->end());
+        }
+
+        template<typename U>
+        void read_arithmetic_types(JsonVariant var, const U& value)
+        {
+            std::cout << "UNHANDLE!!! read_arithmetic_types" << std::endl;
+        }
+
+        void read_arithmetic_types(JsonVariant var, bool& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, char& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, int8_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, int16_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, int32_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, int64_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, uint8_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, uint16_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, uint32_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, uint64_t& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, float& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        void read_arithmetic_types(JsonVariant var, double& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        template<typename U>
+        void read_string_types(JsonVariant var, const U& value)
+        {
+            std::cout << "UNHANDLE!!! read_string_types" << std::endl;
+        }
+
+        void read_string_types(JsonVariant var, std::string& value)
+        {
+            std::cout << value << std::endl;
+            var.set(value);
+        }
+
+        template<typename U>
+        void read_basic_types(JsonVariant var, const Reflection::type& value_type,U& value)
+        {
+            if (value_type.is_arithmetic())
+            {
+                std::cout << "is_arithmetic" << std::endl;
+                read_arithmetic_types(var,value);
+            }
+            else if (value_type.is_enumeration())
+            {
+
+                std::cout << "is_enumeration" << std::endl;
+                Reflection::enumeration enum_type = value_type.get_enumeration();
+                std::string enum_string = enum_type.value_to_name(value).to_string();
+                read_string_types(var,enum_string);
+            }
+            else if (value_type == Reflection::type::get<std::string>())
+            {
+                std::cout << "is_string" << std::endl;
+                read_string_types(var,value);
+            }
+        }
+
+        template<typename U>
+        void read_types(JsonVariant var, const Reflection::type& value_type, U& value)
+        {
+            if(value_type.is_pointer())
+            {
+                std::cout << "is_pointer" << std::endl;
+                read_pointer_types(var,value_type, value);
+            }
+            else if(value_type.is_wrapper())
+            {
+                std::cout << "is_wrapper" << std::endl;
+                read_wrapper_types(var,value_type, value);
+            }
+            else if (  value_type.is_arithmetic() || value_type.is_enumeration()
+                || value_type == Reflection::type::get<std::string>())
+            {
+                read_basic_types(var,value_type, value); 
+            }
+            else if(value_type.is_sequential_container())
+            {
+                std::cout << "is_sequential_container" << std::endl;
+                read_sequential_container(var,&value);
+            }
+            else if(value_type.is_associative_container())
+            {
+                std::cout << "is_associative_container" << std::endl;
+                read_associative_container(var,&value);
+            }
+            else // object
+            {
+                std::cout << "is_object" << std::endl;
+                JsonObject obj = var.to<JsonObject>();
+                JsonSerializer serializer(obj,&value);
+                serializer.visit(Reflection::instance(value).get_derived_type());
+            }
+        }
+
 private:
+        struct ClassEntry
+        {
+            std::string mName;
+            size_t mSize = 0;
+            StaticJsonDocument<1 << 20> mJsonDoc;
+        };
+         
+        std::vector<ClassEntry> mTypeStack;
+        JsonObject mJsonOwner;
+        JsonObject mJsonObj;
+
+        size_t mPtrOffset = 0;
+        void* mObjPtr = nullptr;
 
         EZIReflection(visitor)
     };
