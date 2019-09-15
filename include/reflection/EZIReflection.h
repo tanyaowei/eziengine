@@ -235,17 +235,15 @@ private:
         }
 
         template<typename U>
-        void write_sequential_range(JsonVariant var, const Reflection::type& value_type,U start, U last)
+        void write_sequential_range(JsonArray array, const Reflection::type& value_type,U start, U last)
         {
-            JsonArray array = var.to<JsonArray>();
-
             size_t index = 0;
 
             for(auto it = start; it != last; ++it)
             {
-                array.add(0);
+                array.add(JsonVariant());
 
-                write_types(array[index],value_type, *it);
+                write_types(array[index].to<JsonVariant>(),value_type, *it);
 
                 ++index;
             }
@@ -264,7 +262,8 @@ private:
             Reflection::type value_type = Reflection::type::get<U>();
             auto start = std::begin(*value);
             auto last = std::end(*value);
-            write_sequential_range(var,value_type, start,last);
+            JsonArray array = var.to<JsonArray>();
+            write_sequential_range(array,value_type, start,last);
         }
 
         template<typename U, std::size_t SIZE>
@@ -272,7 +271,8 @@ private:
         {
             std::cout << "std::array:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            write_sequential_range(var,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_sequential_range(array,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -280,7 +280,8 @@ private:
         {
             std::cout << "std::vector:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            write_sequential_range(var,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_sequential_range(array,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -288,7 +289,8 @@ private:
         {
             std::cout << "std::list:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            write_sequential_range(var,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_sequential_range(array,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -296,7 +298,8 @@ private:
         {
             std::cout << "std::forward_list:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            write_sequential_range(var,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_sequential_range(array,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -308,7 +311,7 @@ private:
         }
 
         template<typename U>
-        void write_associative_keyvalue_range(JsonVariant var
+        void write_associative_keyvalue_range(JsonArray array
                                             , const Reflection::type& key_type
                                             , const Reflection::type& value_type
                                             ,U start, U last)
@@ -316,8 +319,6 @@ private:
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                JsonArray array = var.to<JsonArray>();
-
                 for(auto it = start; it != last; ++it)
                 {
                     JsonObject obj = array.createNestedObject();
@@ -332,14 +333,12 @@ private:
         }
 
         template<typename U>
-        void write_associative_key_range(JsonVariant var, const Reflection::type& key_type
+        void write_associative_key_range(JsonArray array, const Reflection::type& key_type
                                             ,U start, U last)
         {
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                JsonArray array = var.to<JsonArray>();
-
                 for(auto it = start; it != last; ++it)
                 {
                     JsonObject obj = array.createNestedObject();
@@ -363,8 +362,8 @@ private:
         {
             Reflection::type key_type = Reflection::type::get<U>();
             Reflection::type value_type = Reflection::type::get<V>();
-
-            write_associative_keyvalue_range(var,key_type,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_keyvalue_range(array,key_type,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U,typename V>
@@ -372,8 +371,8 @@ private:
         {
             Reflection::type key_type = Reflection::type::get<U>();
             Reflection::type value_type = Reflection::type::get<V>();
-
-            write_associative_keyvalue_range(var,key_type,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_keyvalue_range(array,key_type,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U,typename V>
@@ -381,8 +380,8 @@ private:
         {
             Reflection::type key_type = Reflection::type::get<U>();
             Reflection::type value_type = Reflection::type::get<V>();
-
-            write_associative_keyvalue_range(var,key_type,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_keyvalue_range(array,key_type,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U,typename V>
@@ -390,36 +389,40 @@ private:
         {
             Reflection::type key_type = Reflection::type::get<U>();
             Reflection::type value_type = Reflection::type::get<V>();
-
-            write_associative_keyvalue_range(var,key_type,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_keyvalue_range(array,key_type,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_associative_container(JsonVariant var, const std::set<U>* value)
         {
             Reflection::type key_type = Reflection::type::get<U>();
-            write_associative_key_range(var,key_type,value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_key_range(array,key_type,value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_associative_container(JsonVariant var, const std::multiset<U>* value)
         {
             Reflection::type key_type = Reflection::type::get<U>();
-            write_associative_key_range(var,key_type,value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_key_range(array,key_type,value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_associative_container(JsonVariant var, const std::unordered_set<U>* value)
         {
             Reflection::type key_type = Reflection::type::get<U>();
-            write_associative_key_range(var,key_type,value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_key_range(array,key_type,value->cbegin(),value->cend());
         }
 
         template<typename U>
         void write_associative_container(JsonVariant var, const std::unordered_multiset<U>* value)
         {
             Reflection::type key_type = Reflection::type::get<U>();
-            write_associative_key_range(var,key_type,value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_associative_key_range(array,key_type,value->cbegin(),value->cend());
         }
 
         template<typename U>
@@ -749,8 +752,17 @@ private:
         {
             if(value != nullptr)
             {
-                read_string_types(var, value);
+                delete value;
+                value = nullptr;
             }
+
+            std::string temp;
+
+            read_string_types(var, temp);
+
+            value = new char[temp.size()];
+
+            std::copy(temp.begin(),temp.end(),value);
         }
 
         template<typename U>
@@ -768,19 +780,18 @@ private:
         }
 
         template<typename U>
-        void read_sequential_range(JsonVariant var, const Reflection::type& value_type,U start, U last)
+        void read_sequential_range(JsonArray array, const Reflection::type& value_type,U start, U last)
         {
-            JsonArray array = var.to<JsonArray>();
-
             size_t index = 0;
 
             for(auto it = start; it != last; ++it)
             {
-                array.add(0);
+                if(index < array.size())
+                {
+                    read_types(array[index].as<JsonVariant>(),value_type, *it);
 
-                read_types(array[index],value_type, *it);
-
-                ++index;
+                    ++index;
+                }
             }
         }
 
@@ -797,7 +808,8 @@ private:
             Reflection::type value_type = Reflection::type::get<U>();
             auto start = std::begin(*value);
             auto last = std::end(*value);
-            read_sequential_range(var,value_type, start,last);
+            JsonArray array = var.as<JsonArray>();
+            read_sequential_range(array,value_type, start,last);
         }
 
         template<typename U, std::size_t SIZE>
@@ -805,7 +817,8 @@ private:
         {
             std::cout << "std::array:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            read_sequential_range(var,value_type, value->begin(),value->end());
+            JsonArray array = var.as<JsonArray>();
+            read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
         template<typename U>
@@ -813,7 +826,9 @@ private:
         {
             std::cout << "std::vector:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            read_sequential_range(var,value_type, value->begin(),value->end());
+            JsonArray array = var.as<JsonArray>();
+            value->resize(array.size());
+            read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
         template<typename U>
@@ -821,7 +836,9 @@ private:
         {
             std::cout << "std::list:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            read_sequential_range(var,value_type, value->begin(),value->end());
+            JsonArray array = var.as<JsonArray>();
+            value->resize(array.size());
+            read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
         template<typename U>
@@ -829,7 +846,9 @@ private:
         {
             std::cout << "std::forward_list:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            read_sequential_range(var,value_type, value->begin(),value->end());
+            JsonArray array = var.as<JsonArray>();
+            value->resize(array.size());
+            read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
         template<typename U>
@@ -837,11 +856,13 @@ private:
         {
             std::cout << "std::deque:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            read_sequential_range(var,value_type, value->begin(),value->end());
+            JsonArray array = var.as<JsonArray>();
+            value->resize(array.size());
+            read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
         template<typename U>
-        void read_associative_keyvalue_range(JsonVariant var
+        void read_associative_keyvalue_range(JsonArray array
                                             , const Reflection::type& key_type
                                             , const Reflection::type& value_type
                                             ,U start, U last)
@@ -849,13 +870,17 @@ private:
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                JsonArray array = var.to<JsonArray>();
+                size_t index = 0;
 
                 for(auto it = start; it != last; ++it)
                 {
-                    JsonObject obj = array.createNestedObject();
-                    read_basic_types(obj["KEY"].to<JsonVariant>(),key_type, it->first);
-                    read_types(obj["VALUE"].to<JsonVariant>(),value_type,it->second);
+                    if(index < array.size())
+                    {
+                        JsonObject obj = array[index].as<JsonObject>();
+                        read_basic_types(obj["KEY"].as<JsonVariant>(),key_type, it->first);
+                        read_types(obj["VALUE"].as<JsonVariant>(),value_type,it->second);
+                        ++index;
+                    }
                 }
             }
             else
@@ -865,18 +890,20 @@ private:
         }
 
         template<typename U>
-        void read_associative_key_range(JsonVariant var, const Reflection::type& key_type
+        void read_associative_key_range(JsonArray array, const Reflection::type& key_type
                                             ,U start, U last)
         {
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                JsonArray array = var.to<JsonArray>();
-
                 for(auto it = start; it != last; ++it)
                 {
-                    JsonObject obj = array.createNestedObject();
-                    read_basic_types(obj["KEY"].to<JsonVariant>(),key_type, *it);
+                    if(index < array.size())
+                    {
+                        JsonObject obj = array[index].as<JsonObject>();
+                        read_basic_types(obj["KEY"].as<JsonVariant>(),key_type, *it);
+                        ++index;
+                    }
                 }
             }
             else
@@ -963,74 +990,74 @@ private:
 
         void read_arithmetic_types(JsonVariant var, bool& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<bool>() << std::endl;
+            value = var.as<bool>();
         }
 
         void read_arithmetic_types(JsonVariant var, char& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<char>() << std::endl;
+            value = var.as<char>();
         }
 
         void read_arithmetic_types(JsonVariant var, int8_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<int8_t>() << std::endl;
+            value = var.as<int8_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, int16_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<int16_t>() << std::endl;
+            value = var.as<int16_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, int32_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<int32_t>() << std::endl;
+            value = var.as<int32_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, int64_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<int64_t>() << std::endl;
+            value = var.as<int64_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, uint8_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<uint8_t>() << std::endl;
+            value = var.as<uint8_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, uint16_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<uint16_t>() << std::endl;
+            value = var.as<uint16_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, uint32_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<uint32_t>() << std::endl;
+            value = var.as<uint32_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, uint64_t& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<uint64_t>() << std::endl;
+            value = var.as<uint64_t>();
         }
 
         void read_arithmetic_types(JsonVariant var, float& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<float>() << std::endl;
+            value = var.as<float>();
         }
 
         void read_arithmetic_types(JsonVariant var, double& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<double>() << std::endl;
+            value = var.as<double>();
         }
 
         template<typename U>
@@ -1041,8 +1068,8 @@ private:
 
         void read_string_types(JsonVariant var, std::string& value)
         {
-            std::cout << value << std::endl;
-            var.set(value);
+            std::cout << var.as<std::string>() << std::endl;
+            value = var.as<std::string>();
         }
 
         template<typename U>
