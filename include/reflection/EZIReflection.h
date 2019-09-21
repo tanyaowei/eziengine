@@ -780,6 +780,34 @@ private:
         }
 
         template<typename U>
+        void free_range_type(const U& value)
+        {
+            std::cout << "UNHANDLE!!! free_range_type: " << typeid(U).name() << std::endl;            
+        }
+
+        template<typename U>
+        void free_range_type(U*& value)
+        {
+            delete value;
+            value = nullptr;
+        }
+
+        template<typename U>
+        void free_range_type(std::shared_ptr<U>& value)
+        {
+            value.reset(nullptr);
+        }
+
+        template<typename U>
+        void free_sequential_range(U start, U last)
+        {
+            for(auto it = start; it != last; ++it)
+            {
+                free_range_type(*it);
+            }
+        }
+
+        template<typename U>
         void read_sequential_range(JsonArray array, const Reflection::type& value_type,U start, U last)
         {
             size_t index = 0;
@@ -896,6 +924,7 @@ private:
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
+                size_t index = 0;
                 for(auto it = start; it != last; ++it)
                 {
                     if(index < array.size())

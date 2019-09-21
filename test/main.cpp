@@ -212,7 +212,7 @@ int main()
   std::cout << "EZIEngine::Serializer" << std::endl;
   DynamicJsonDocument doc(1 << 20);
   JsonObject json_obj = doc.to<JsonObject>();
-  EZIEngine::JsonDeserializer serializer(json_obj,obj);
+  EZIEngine::JsonSerializer serializer(json_obj,obj);
   serializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
   std::string output;
   serializeJsonPretty(doc,output);
