@@ -5,6 +5,8 @@
 #include "serialization/EZIDataStream.h"
 #include "reflection/EZIReflection.h"
 #include "serialization/EZISerialization.h"
+#include "serialization/EZISerializer.h"
+#include "serialization/EZIDeserializer.h"
 
 enum Fruits
 {

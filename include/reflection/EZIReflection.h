@@ -17,14 +17,13 @@ RTTR_REGISTER_VISITOR(EZIEngine::JsonDeserializer);
 #include <rttr/enumeration.h>
 #include <rttr/type>
 
-#include <ArduinoJson.h>
-
+//#include <ArduinoJson.h>
 //#include <math/EZIType.h>
-#include <iterator>
-#include <iostream>
-#include <typeinfo>
-#include <forward_list>
-#include <stack>
+//#include <iterator>
+//#include <iostream>
+//#include <typeinfo>
+//#include <forward_list>
+//#include <stack>
 
 namespace EZIEngine
 {
@@ -40,6 +39,7 @@ RTTR_REGISTRATION
 
 namespace EZIEngine
 {
+    #if 0
     class JsonSerializer: public Reflection::visitor
     {
         public:
@@ -592,7 +592,9 @@ private:
         size_t mPtrOffset = 0;
         const void* mObjPtr = nullptr;
     };
+    #endif
 
+    #if 0
     class JsonDeserializer: public Reflection::visitor
     {
         public:
@@ -1178,6 +1180,7 @@ private:
 
         EZIReflection(visitor)
     };
+    #endif
 }
 
 #endif
