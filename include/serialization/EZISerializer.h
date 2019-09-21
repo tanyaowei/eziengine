@@ -21,21 +21,22 @@ namespace EZIEngine
         :mJsonOwner(jsonowner),mObjPtr(objptr){}
 
         template<typename Derived>
-        void iterate_base_classes(JsonArray array)
+        void iterate_base_classes(JsonObject object)
         {
         }
 
         template<typename Derived, typename Base_Class, typename...Base_Classes>
-        void iterate_base_classes(JsonArray array)
+        void iterate_base_classes(JsonObject object)
         {
-            iterate_base_classes<Derived, Base_Classes...>(array);
+            iterate_base_classes<Derived, Base_Classes...>(object);
 
             auto it = mTypeStack.begin();
             for(;it != mTypeStack.end(); ++it)
             {
                 if(it->mName == get_type_name<Base_Class>())
                 {
-                    array.add(it->mJsonDoc.as<JsonObject>());
+                    JsonObject base_obj = object.createNestedObject(it->mName);
+                    base_obj.set(it->mJsonDoc.as<JsonObject>()[it->mName].as<JsonObject>());
                     break;
                 }
             }
@@ -52,10 +53,8 @@ namespace EZIEngine
             ClassEntry temp;
             temp.mName = get_type_name<declaring_type_t>();
             temp.mSize = sizeof(declaring_type_t);
-            temp.mJsonDoc["CLASS_TYPE_NAME"] = get_type_name<declaring_type_t>(); 
-            JsonArray array = temp.mJsonDoc.createNestedArray("BASE_CLASSES");
-            temp.mJsonDoc.createNestedObject("PROPERTIES");
-            iterate_base_classes<declaring_type_t, Base_Classes...>(array);
+            JsonObject object = temp.mJsonDoc.createNestedObject(temp.mName);
+            iterate_base_classes<declaring_type_t, Base_Classes...>(object);
             mPtrOffset = 0;
             if(mTypeStack.empty() == false)
             {
@@ -118,7 +117,7 @@ namespace EZIEngine
 
             std::string var_name = info.property_item.get_name().to_string();
 
-            JsonObject obj = mJsonObj["PROPERTIES"].as<JsonObject>();
+            JsonObject obj = mJsonObj[get_type_name<declaring_type_t>().c_str()].template as<JsonObject>();
 
             write_types(obj[var_name].to<JsonVariant>() ,value_type,accessor);
         }  
@@ -138,7 +137,7 @@ namespace EZIEngine
 
             std::string var_name = info.property_item.get_name().to_string();
 
-            JsonObject obj = mJsonObj["PROPERTIES"].as<JsonObject>();
+            JsonObject obj = mJsonObj[get_type_name<declaring_type_t>().c_str()].template as<JsonObject>();
 
             write_types(obj[var_name].to<JsonVariant>(),value_type,getter);
         }
@@ -156,7 +155,7 @@ namespace EZIEngine
 
             std::string var_name = info.property_item.get_name().to_string();
 
-            JsonObject obj = mJsonObj["PROPERTIES"].as<JsonObject>();
+            JsonObject obj = mJsonObj[get_type_name<declaring_type_t>().c_str()].template as<JsonObject>();
 
             write_types(obj[var_name].to<JsonVariant>() ,value_type,accessor);
         }
@@ -296,8 +295,17 @@ private:
                 for(auto it = start; it != last; ++it)
                 {
                     JsonObject obj = array.createNestedObject();
-                    write_basic_types(obj["KEY"].to<JsonVariant>(),key_type, it->first);
-                    write_types(obj["VALUE"].to<JsonVariant>(),value_type,it->second);
+                    std::string key_name;
+                    if(key_type.is_enumeration())
+                    {
+                        Reflection::enumeration enum_type = key_type.get_enumeration();
+                        key_name = enum_type.value_to_name(it->first).to_string();
+                    }
+                    else
+                    {
+                        key_name = std::to_string(it->first);
+                    }
+                    write_types(obj[key_name].to<JsonVariant>(),value_type,it->second);
                 }
             }
             else
@@ -313,10 +321,15 @@ private:
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
+                size_t index = 0;
+
                 for(auto it = start; it != last; ++it)
                 {
-                    JsonObject obj = array.createNestedObject();
-                    write_basic_types(obj["KEY"].to<JsonVariant>(),key_type, *it);
+                    array.add(JsonVariant());
+
+                    write_basic_types(array[index].to<JsonVariant>(),key_type, *it);
+
+                    ++index;
                 }
             }
             else
@@ -549,7 +562,7 @@ private:
             }
         }
 
-private:
+    private:
         EZIReflection(visitor)
 
         struct ClassEntry
