@@ -155,30 +155,30 @@ EZIReflectionRegistration
 
   EZIEngine::Reflection::registration::class_<SubObject>("SubObject")
   .constructor<>()
-  .property("SubObject::s", &SubObject::s)
-  .property("SubObject::e", &SubObject::e)
-  .property("SubObject::g", &SubObject::g);
+  .property("s", &SubObject::s)
+  .property("e", &SubObject::e)
+  .property("g", &SubObject::g);
 
   EZIEngine::Reflection::registration::class_<SubObject2>("SubObject2")
   .constructor<>()
-  .property("SubObject2::f", &SubObject2::f);
+  .property("f", &SubObject2::f);
 
   EZIEngine::Reflection::registration::class_<SubObject3>("SubObject3")
   .constructor<>()
-  .property("SubObject3::mPtr", &SubObject3::mPtr);
+  .property("mPtr", &SubObject3::mPtr);
 
   EZIEngine::Reflection::registration::class_<SubObject4>("SubObject4")
   .constructor<>()
-  .property("SubObject4::mPtr", &SubObject4::mPtr);
+  .property("mPtr", &SubObject4::mPtr);
 
   EZIEngine::Reflection::registration::class_<SubObject5>("SubObject5")
   .constructor<>()
-  .property("SubObject5::mPtr", &SubObject5::mPtr);
+  .property("mPtr", &SubObject5::mPtr);
 
   EZIEngine::Reflection::registration::class_<Object>("Object")
   .constructor<>()
-  .property("Object::a", &Object::a)
-  .property("Object::b", &Object::b);
+  .property("a", &Object::a)
+  .property("b", &Object::b);
 }
 
 #define TYPENAME(TYPE) typeid(TYPE).name()
