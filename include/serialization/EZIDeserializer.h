@@ -328,29 +328,42 @@ private:
             read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
-        template<typename U>
+        template<typename U, typename V, typename W>
         void read_associative_keyvalue_range(JsonArray array
                                             , const Reflection::type& key_type
                                             , const Reflection::type& value_type
-                                            ,U start, U last)
+                                            ,W inserter)
         {
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                for(auto it = start; it != last; ++it)
+                for(auto elem: array)
                 {
-                    JsonObject obj = array.createNestedObject();
-                    std::string key_name;
-                    if(key_type.is_enumeration())
+                    JsonObject temp_obj = elem.as<JsonObject>();
+
+                    U key_temp;
+
+                    if(key_type.is_arithmetic())
+                    {
+
+                    }
+                    else if(key_type.is_enumeration())
                     {
                         Reflection::enumeration enum_type = key_type.get_enumeration();
-                        key_name = enum_type.value_to_name(it->first).to_string();
+                        Reflection::variant var = enum_type.name_to_value(temp_obj.begin()->key().c_str());
+                        key_temp = var.get_value<U>();
                     }
                     else
                     {
-                        key_name = std::to_string(it->first);
+                        key_temp = temp_obj.begin()->key().c_str();
                     }
-                    read_types(obj[key_name].as<JsonVariant>(),value_type,it->second);
+                    V value_temp;
+
+                    read_types(temp_obj.begin()->value().as<JsonVariant>(),value_type,value_temp);
+
+                    *inserter = std::make_pair(key_temp,value_temp);
+
+                    ++inserter;                    
                 }
             }
             else
@@ -359,22 +372,22 @@ private:
             }
         }
 
-        template<typename U>
+        template<typename U, typename V>
         void read_associative_key_range(JsonArray array, const Reflection::type& key_type
-                                            ,U start, U last)
+                                            ,V inserter)
         {
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                size_t index = 0;
-
-                for(auto it = start; it != last; ++it)
+                for(auto elem: array)
                 {
-                    array.add(JsonVariant());
+                    U temp;
 
-                    read_basic_types(array[index].as<JsonVariant>(),key_type, *it);
+                    read_basic_types(elem.as<JsonVariant>(),key_type, temp);
 
-                    ++index;
+                    *inserter = temp;
+
+                    ++inserter;
                 }
             }
             else
@@ -396,7 +409,7 @@ private:
             Reflection::type value_type = Reflection::type::get<V>();
             JsonArray array = var.as<JsonArray>();
             value->clear();
-            read_associative_keyvalue_range(array,key_type,value_type, value->begin(),value->end());
+            read_associative_keyvalue_range<U,V>(array,key_type,value_type, std::inserter(*value,value->end()));
         }
 
         template<typename U,typename V>
@@ -406,7 +419,7 @@ private:
             Reflection::type value_type = Reflection::type::get<V>();
             JsonArray array = var.to<JsonArray>();
             value->clear();
-            read_associative_keyvalue_range(array,key_type,value_type, value->begin(),value->end());
+            read_associative_keyvalue_range<U,V>(array,key_type,value_type,  std::inserter(*value,value->end()));
         }
 
         template<typename U,typename V>
@@ -416,7 +429,7 @@ private:
             Reflection::type value_type = Reflection::type::get<V>();
             JsonArray array = var.as<JsonArray>();
             value->clear();
-            read_associative_keyvalue_range(array,key_type,value_type, value->begin(),value->end());
+            read_associative_keyvalue_range<U,V>(array,key_type,value_type, std::inserter(*value,value->end()));
         }
 
         template<typename U,typename V>
@@ -426,7 +439,7 @@ private:
             Reflection::type value_type = Reflection::type::get<V>();
             JsonArray array = var.as<JsonArray>();
             value->clear();
-            read_associative_keyvalue_range(array,key_type,value_type, value->begin(),value->end());
+            read_associative_keyvalue_range<U,V>(array,key_type,value_type,  std::inserter(*value,value->end()));
         }
 
         template<typename U>
@@ -435,7 +448,7 @@ private:
             Reflection::type key_type = Reflection::type::get<U>();
             JsonArray array = var.as<JsonArray>();
             value->clear();
-            read_associative_key_range(array,key_type,value->begin(),value->end());
+            read_associative_key_range<U>(array,key_type, std::inserter(*value,value->end()));
         }
 
         template<typename U>
@@ -443,7 +456,7 @@ private:
         {
             Reflection::type key_type = Reflection::type::get<U>();
             JsonArray array = var.as<JsonArray>();
-            read_associative_key_range(array,key_type,value->begin(),value->end());
+            read_associative_key_range<U>(array,key_type, std::inserter(*value,value->end()));
         }
 
         template<typename U>
@@ -452,7 +465,7 @@ private:
             Reflection::type key_type = Reflection::type::get<U>();
             JsonArray array = var.as<JsonArray>();
             value->clear();
-            read_associative_key_range(array,key_type,value->begin(),value->end());
+            read_associative_key_range<U>(array,key_type, std::inserter(*value,value->end()));
         }
 
         template<typename U>
@@ -461,7 +474,7 @@ private:
             Reflection::type key_type = Reflection::type::get<U>();
             JsonArray array = var.as<JsonArray>();
             value->clear();
-            read_associative_key_range(array,key_type,value->begin(),value->end());
+            read_associative_key_range<U>(array,key_type, std::inserter(*value,value->end()));
         }
 
         template<typename U>
