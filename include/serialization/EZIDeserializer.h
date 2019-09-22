@@ -337,6 +337,7 @@ private:
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
+                #if 0
                 for(auto elem: array)
                 {
                     JsonObject temp_obj = elem.as<JsonObject>();
@@ -365,6 +366,7 @@ private:
 
                     ++inserter;                    
                 }
+                #endif
             }
             else
             {

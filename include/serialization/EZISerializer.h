@@ -184,7 +184,7 @@ private:
         {
             if(value != nullptr)
             {
-                write_string_types(var, value);
+                var.set(write_string_value(value));
             }
         }
 
@@ -408,93 +408,94 @@ private:
         }
 
         template<typename U>
-        void write_arithmetic_types(JsonVariant var, const U& value)
+        void* write_arithmetic_value(const U&)
         {
-            std::cout << "UNHANDLE!!! write_arithmetic_types" << std::endl;
+            return nullptr;
         }
 
-        void write_arithmetic_types(JsonVariant var, const bool& value)
+        bool write_arithmetic_value(const bool& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const char& value)
+        char write_arithmetic_value(const char& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const int8_t& value)
+        int8_t write_arithmetic_value(const int8_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const int16_t& value)
+        int16_t write_arithmetic_value(const int16_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const int32_t& value)
+        int32_t write_arithmetic_value(const int32_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const int64_t& value)
+        int64_t write_arithmetic_value(const int64_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const uint8_t& value)
+        uint8_t write_arithmetic_value(const uint8_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const uint16_t& value)
+        uint16_t write_arithmetic_value(const uint16_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const uint32_t& value)
+        uint32_t write_arithmetic_value(const uint32_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const uint64_t& value)
+        uint64_t write_arithmetic_value(const uint64_t& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const float& value)
+        float write_arithmetic_value(const float& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
-        void write_arithmetic_types(JsonVariant var, const double& value)
+        double write_arithmetic_value(const double& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
         template<typename U>
-        void write_string_types(JsonVariant var, const U& value)
+        std::string write_string_value(const U& value)
         {
             std::cout << "UNHANDLE!!! write_string_types" << std::endl;
+            return std::string();
         }
 
-        void write_string_types(JsonVariant var, const std::string& value)
+        std::string write_string_value(const std::string& value)
         {
             std::cout << value << std::endl;
-            var.set(value);
+            return value;
         }
 
         template<typename U>
@@ -503,7 +504,7 @@ private:
             if (value_type.is_arithmetic())
             {
                 std::cout << "is_arithmetic" << std::endl;
-                write_arithmetic_types(var,value);
+                var.set(write_arithmetic_value(value));
             }
             else if (value_type.is_enumeration())
             {
@@ -511,12 +512,12 @@ private:
                 std::cout << "is_enumeration" << std::endl;
                 Reflection::enumeration enum_type = value_type.get_enumeration();
                 std::string enum_string = enum_type.value_to_name(value).to_string();
-                write_string_types(var,enum_string);
+                var.set(write_string_value(enum_string));
             }
             else if (value_type == Reflection::type::get<std::string>())
             {
                 std::cout << "is_string" << std::endl;
-                write_string_types(var,value);
+                var.set(write_string_value(value));
             }
         }
 
