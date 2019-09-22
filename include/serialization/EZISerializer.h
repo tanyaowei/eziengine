@@ -64,13 +64,13 @@ namespace EZIEngine
                 }
             }
             mTypeStack.push_back(temp);
-            mJsonObj = mTypeStack.back().mJsonDoc.as<JsonObject>();
+            mJsonObj = mTypeStack.back().mJsonDoc.as<JsonObject>()[temp.mName].as<JsonObject>();
         }
 
         template<typename T, typename...Base_Classes>
         void visit_type_end(const type_info<T>& info)
         {
-            mJsonOwner.set(mJsonObj);
+            mJsonOwner.set(mTypeStack.back().mJsonDoc.as<JsonObject>());
         }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -117,9 +117,7 @@ namespace EZIEngine
 
             std::string var_name = info.property_item.get_name().to_string();
 
-            JsonObject obj = mJsonObj[get_type_name<declaring_type_t>().c_str()].template as<JsonObject>();
-
-            write_types(obj[var_name].to<JsonVariant>() ,value_type,accessor);
+            write_types(mJsonObj[var_name].to<JsonVariant>() ,value_type,accessor);
         }  
 
         template<typename T>
@@ -137,9 +135,7 @@ namespace EZIEngine
 
             std::string var_name = info.property_item.get_name().to_string();
 
-            JsonObject obj = mJsonObj[get_type_name<declaring_type_t>().c_str()].template as<JsonObject>();
-
-            write_types(obj[var_name].to<JsonVariant>(),value_type,getter);
+            write_types(mJsonObj[var_name].to<JsonVariant>(),value_type,getter);
         }
 
         template<typename T>
@@ -155,9 +151,7 @@ namespace EZIEngine
 
             std::string var_name = info.property_item.get_name().to_string();
 
-            JsonObject obj = mJsonObj[get_type_name<declaring_type_t>().c_str()].template as<JsonObject>();
-
-            write_types(obj[var_name].to<JsonVariant>() ,value_type,accessor);
+            write_types(mJsonObj[var_name].to<JsonVariant>() ,value_type,accessor);
         }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +274,8 @@ private:
         {
             std::cout << "std::deque:" << std::endl;
             Reflection::type value_type = Reflection::type::get<U>();
-            write_sequential_range(var,value_type, value->cbegin(),value->cend());
+            JsonArray array = var.to<JsonArray>();
+            write_sequential_range(array,value_type, value->cbegin(),value->cend());
         }
 
         template<typename U>
