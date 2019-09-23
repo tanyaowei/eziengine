@@ -204,15 +204,13 @@ private:
         {
             std::cout << "pointer: " << typeid(U).name() << std::endl;
 
+            U* temp = new U();
+            read_types(var, value_type.get_raw_type(), *temp);
             if(value != nullptr)
             {
                 delete value;
-                value = nullptr;
+                value = temp;
             }
-
-            value = new U();
-
-            read_types(var, value_type.get_raw_type(), *value);
         }
 
         void read_pointer_types(JsonVariant var, const Reflection::type& value_type,char*& value)
@@ -242,8 +240,9 @@ private:
         void read_wrapper_types(JsonVariant var, const Reflection::type& value_type,std::shared_ptr<U>& value)
         {
             std::cout << "std::shared_ptr: " << typeid(U).name() << std::endl;
-            value.reset(new U());
-            read_types(var,value_type.get_wrapped_type().get_raw_type(), *value);
+            U* temp = new U();
+            read_types(var,value_type.get_wrapped_type().get_raw_type(), *temp);
+            value.reset(temp);
         }
 
         template<typename U>
@@ -328,6 +327,67 @@ private:
             read_sequential_range(array,value_type, value->begin(),value->end());
         }
 
+        template<typename U>
+        void read_key_type(const std::string& ,U& )
+        {
+            std::cout << "UNHANDLE!!! read_key_type" << std::endl;
+        }
+
+        void read_key_type(const std::string& key_name,int8_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,int16_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,int32_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,int64_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,uint8_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,uint16_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,uint32_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,uint64_t& key_value)
+        {
+            key_value = std::atoi(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,float& key_value)
+        {
+            key_value = std::atof(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,double& key_value)
+        {
+            key_value = std::atof(key_name.c_str());
+        }
+
+        void read_key_type(const std::string& key_name,std::string& key_value)
+        {
+            key_value = key_name;
+        }
+
         template<typename U, typename V, typename W>
         void read_associative_keyvalue_range(JsonArray array
                                             , const Reflection::type& key_type
@@ -337,7 +397,6 @@ private:
             if (  key_type.is_arithmetic() || key_type.is_enumeration()
                 || key_type == Reflection::type::get<std::string>() )
             {
-                #if 0
                 for(auto elem: array)
                 {
                     JsonObject temp_obj = elem.as<JsonObject>();
@@ -346,7 +405,7 @@ private:
 
                     if(key_type.is_arithmetic())
                     {
-
+                        read_key_type(temp_obj.begin()->key().c_str(),key_temp);
                     }
                     else if(key_type.is_enumeration())
                     {
@@ -356,7 +415,7 @@ private:
                     }
                     else
                     {
-                        key_temp = temp_obj.begin()->key().c_str();
+                        read_key_type(temp_obj.begin()->key().c_str(),key_temp);
                     }
                     V value_temp;
 
@@ -366,7 +425,6 @@ private:
 
                     ++inserter;                    
                 }
-                #endif
             }
             else
             {
@@ -623,9 +681,9 @@ private:
             else // object
             {
                 std::cout << "is_object" << std::endl;
-                JsonObject obj = var.to<JsonObject>();
-                JsonSerializer serializer(obj,&value);
-                serializer.visit(Reflection::instance(value).get_derived_type());
+                JsonObject obj = var.as<JsonObject>();
+                JsonDeserializer deserializer(obj,&value);
+                deserializer.visit(Reflection::type::get_by_name(obj.begin()->key().c_str()));
             }
         }
 

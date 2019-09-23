@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <fstream>
+#include <sstream>
 
 #include "serialization/EZIDataStream.h"
 #include "reflection/EZIReflection.h"
@@ -211,14 +212,36 @@ int main()
 
   //print(temp);
 
-  std::cout << "EZIEngine::Serializer" << std::endl;
+  std::cout << "EZIEngine::Deserializer" << std::endl;
+
+  std::ifstream infile("test.json");
+  std::stringstream sstream;
+  if (infile.is_open())
+  {
+    std::string line;
+    while ( getline (infile,line) )
+    {
+      sstream << line;
+    }
+    infile.close();
+  }
+
   DynamicJsonDocument doc(1 << 20);
+  deserializeJson(doc, sstream.str());
   JsonObject json_obj = doc.to<JsonObject>();
-  EZIEngine::JsonSerializer serializer(json_obj,obj);
+  EZIEngine::JsonDeserializer deserializer(json_obj,obj);
+  deserializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
+
+  std::cout << "EZIEngine::Serializer" << std::endl;
+
+  DynamicJsonDocument doc2(1 << 20);
+  JsonObject json_obj2 = doc2.to<JsonObject>();
+  EZIEngine::JsonSerializer serializer(json_obj2,obj);
   serializer.visit(EZIEngine::Reflection::type::get_by_name("Object"));
+
   std::string output;
-  serializeJsonPretty(doc,output);
-  std::ofstream outfile("test.json");
+  serializeJsonPretty(doc2,output);
+  std::ofstream outfile("test2.json");
   if(outfile.is_open())
   {
     outfile << output;
