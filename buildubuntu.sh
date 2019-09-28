@@ -6,8 +6,8 @@ cd $BASE_PATH
 mkdir -p build
 mkdir -p install
 cd build
-cmake -DCMAKE_BUILD_TYPE=$1 -DCMAKE_CXX_STANDARD=17 -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$BASE_PATH/install ..
-make -j12
-make install
+time cmake -DCMAKE_BUILD_TYPE=$1 -DCMAKE_CXX_STANDARD=17 -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$BASE_PATH/install ..
+time make -j12
+time make install
 
 cd $CUR_DIR
