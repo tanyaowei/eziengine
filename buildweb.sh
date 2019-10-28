@@ -4,7 +4,7 @@ BASE_PATH=`dirname $SCRIPT_PATH`
 cd $BASE_PATH
 
 source /var/common/emsdk/emsdk_env.sh
-EMSCRIPTEN=$EMSDK/upstream/emscripten
+export EMSCRIPTEN=$EMSDK/upstream/emscripten
 mkdir -p build
 mkdir -p install
 cd build
