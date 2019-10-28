@@ -8,6 +8,8 @@ SET(BUILD_RTTR_DYNAMIC OFF CACHE BOOL "Disable rttr dynamic library" FORCE)
 SET(BUILD_EXAMPLES OFF CACHE BOOL "Disable rttr examples" FORCE)
 SET(BUILD_UNIT_TESTS OFF CACHE BOOL "Disable rttr unittests" FORCE)
 
+add_definitions(-Wno-implicit-int-float-conversion)
+
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/dependencies/glm)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/dependencies/rttr)
 
