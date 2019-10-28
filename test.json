@@ -1,0 +1,48 @@
+{
+  "Object": {
+    "SubObject5": {
+      "SubObject4": {
+        "mPtr": "APPLE"
+      },
+      "SubObject3": {
+        "mPtr": "APPLE"
+      },
+      "mPtr": "APPLE"
+    },
+    "SubObject2": {
+      "SubObject": {
+        "s": "neopets!",
+        "e": [
+          {
+            "GRAPES": {
+              "SubObject3": {
+                "mPtr": "APPLE"
+              }
+            }
+          },
+          {
+            "GRAPES": {
+              "SubObject3": {
+                "mPtr": "APPLE"
+              }
+            }
+          }
+        ],
+        "g": "APPLE"
+      },
+      "f": [
+        5,
+        6,
+        7
+      ]
+    },
+    "a": 47,
+    "b": [
+      {
+        "SubObject4": {
+          "mPtr": "APPLE"
+        }
+      }
+    ]
+  }
+}
