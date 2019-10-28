@@ -3,7 +3,7 @@ SCRIPT_PATH=`realpath $0`
 BASE_PATH=`dirname $SCRIPT_PATH`
 cd $BASE_PATH
 
-source /var/common/emsdk/emsdk_env.sh
+. /var/common/emsdk/emsdk_env.sh
 EMSCRIPTEN_ROOT_PATH=$EMSDK/upstream/emscripten
 mkdir -p build
 mkdir -p install
