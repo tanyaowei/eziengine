@@ -11,9 +11,9 @@ set(CMAKE_CXX_STANDARD 17)
 #add_definitions(-Wno-implicit-int-float-conversion)
 
 file(GLOB SOURCES 
-"${CMAKE_CURRENT_LIST_DIR}/source/graphics/*.cpp"
-"${CMAKE_CURRENT_LIST_DIR}/source/reflection/*.cpp" 
-"${CMAKE_CURRENT_LIST_DIR}/source/serialization/*.cpp")
+"${CMAKE_CURRENT_LIST_DIR}/graphics/*.cpp"
+"${CMAKE_CURRENT_LIST_DIR}/reflection/*.cpp" 
+"${CMAKE_CURRENT_LIST_DIR}/serialization/*.cpp")
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
@@ -21,7 +21,7 @@ target_link_libraries(${PROJECT_NAME} CONAN_PKG::glm)
 target_link_libraries(${PROJECT_NAME} CONAN_PKG::arduinojson)
 target_link_libraries(${PROJECT_NAME} CONAN_PKG::rttr)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 #add_executable(ezitest ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp)
 

@@ -1,10 +1,14 @@
 from conans import ConanFile, CMake
 
 class EziEngineConan(ConanFile):
+    name            = "eziengine"
+    version         = "1.0.0"     
+    description     = "Conan package for rttr."    
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "gcc", "txt"
     options = { "shared": [True, False]} 
     default_options = "shared=False"
+    exports_sources = "src/*"
 
     def requirements(self):
         self.requires("glm/0.9.9.5@_/_")
@@ -20,5 +24,15 @@ class EziEngineConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure()
+        cmake.configure(source_folder="src")
         cmake.build()
+
+    def package(self):      
+        self.copy("*.h"  , dst="include", src="src")
+        self.copy("*.a"  , dst="lib", keep_path=False)
+        self.copy("*.so" , dst="lib", keep_path=False)
+        self.copy("*.lib", dst="lib", keep_path=False)
+        self.copy("*.dll", dst="bin", keep_path=False)
+
+    def package_info(self):
+        self.cpp_info.libs = ["eziengine"]
