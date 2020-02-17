@@ -1,42 +1,37 @@
 cmake_minimum_required(VERSION 3.5)
 
-project (eziengine VERSION 1.0.0)
+set(PROJECT_NAME eziengine)
+project(${PROJECT_NAME})
 
-SET(BUILD_STATIC ON CACHE BOOL "Build rttr static library" FORCE)
-SET(BUILD_WITH_STATIC_RUNTIME_LIBS OFF CACHE BOOL "Build with static runtime library" FORCE)
-SET(BUILD_RTTR_DYNAMIC OFF CACHE BOOL "Disable rttr dynamic library" FORCE)
-SET(BUILD_EXAMPLES OFF CACHE BOOL "Disable rttr examples" FORCE)
-SET(BUILD_UNIT_TESTS OFF CACHE BOOL "Disable rttr unittests" FORCE)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(TARGETS)
 
-add_definitions(-Wno-implicit-int-float-conversion)
+set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/dependencies/glm)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/dependencies/rttr)
+#add_definitions(-Wno-implicit-int-float-conversion)
 
 file(GLOB SOURCES 
 "${CMAKE_CURRENT_LIST_DIR}/source/graphics/*.cpp"
 "${CMAKE_CURRENT_LIST_DIR}/source/reflection/*.cpp" 
 "${CMAKE_CURRENT_LIST_DIR}/source/serialization/*.cpp")
 
-add_library(eziengine STATIC ${SOURCES})
+add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
-target_link_libraries(eziengine glm_static RTTR::Core_Lib)
+target_link_libraries(${PROJECT_NAME} CONAN_PKG::glm)
+target_link_libraries(${PROJECT_NAME} CONAN_PKG::arduinojson)
+target_link_libraries(${PROJECT_NAME} CONAN_PKG::rttr)
 
-target_include_directories(eziengine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/dependencies/glm)
-target_include_directories(eziengine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/dependencies/rttr/src)
-target_include_directories(eziengine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/dependencies/ArduinoJson/src)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
-target_include_directories(eziengine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+#add_executable(ezitest ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp)
 
-add_executable(ezitest ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp)
+#target_link_libraries(ezitest ${PROJECT_NAME})
 
-target_link_libraries(ezitest eziengine)
-
-install(TARGETS ezitest
+install(TARGETS ${PROJECT_NAME}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )
 
-install(TARGETS eziengine
+install(TARGETS ${PROJECT_NAME}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include

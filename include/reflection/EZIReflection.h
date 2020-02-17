@@ -12,10 +12,10 @@ namespace EZIEngine
 RTTR_REGISTER_VISITOR(EZIEngine::JsonSerializer);
 RTTR_REGISTER_VISITOR(EZIEngine::JsonDeserializer);
 
-#include <rttr/registration>
-#include <rttr/registration_friend>
+#include <rttr/registration.h>
+#include <rttr/registration_friend.h>
 #include <rttr/enumeration.h>
-#include <rttr/type>
+#include <rttr/type.h>
 
 //#include <ArduinoJson.h>
 //#include <math/EZIType.h>

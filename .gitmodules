@@ -1,9 +1,0 @@
-[submodule "dependencies/glm"]
-	path = dependencies/glm
-	url = https://github.com/g-truc/glm.git
-[submodule "dependencies/rttr"]
-	path = dependencies/rttr
-	url = https://github.com/rttrorg/rttr.git
-[submodule "dependencies/ArduinoJson"]
-	path = dependencies/ArduinoJson
-	url = https://github.com/bblanchon/ArduinoJson.git
